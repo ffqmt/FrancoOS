@@ -25,8 +25,8 @@ type Linha<T> = { colecao: string; id: string; dados: T; user_id: string };
 const MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
 
 function etapa(diasParaVencer: number) {
-  if (diasParaVencer === 3 || diasParaVencer === 0) return "lembrete_vencimento";
-  if (diasParaVencer === -3 || diasParaVencer === -7) return "cobranca_atraso";
+  if (diasParaVencer === 3 || diasParaVencer === 0) return "lembrete_vencimento_cliente_contabil";
+  if (diasParaVencer === -3 || diasParaVencer === -7) return "cobranca_atraso_cliente_contabil";
   return null;
 }
 
@@ -48,7 +48,8 @@ export async function GET(request: Request) {
   }
 
   const simular = process.env.COBRANCA_WHATSAPP_ATIVA !== "1" || new URL(request.url).searchParams.get("simular") === "1";
-  const pix = process.env.COBRANCA_PIX_CHAVE ?? "";
+  // Chave Pix (CNPJ) informada pela Fernanda em 05/10/2026; a variável sobrescreve se mudar.
+  const pix = process.env.COBRANCA_PIX_CHAVE || "57360731000165";
   const autaxUrl = process.env.AUTAX_URL ?? "";
   const autaxChave = process.env.AUTAX_FRANCOOS_API_KEY ?? "";
   if (!simular && (!pix || !autaxUrl || !autaxChave)) {
@@ -142,7 +143,7 @@ async function registrarHistorico(
   vencimento: string,
 ) {
   const id = `he_aviso_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
-  const titulo = modelo === "lembrete_vencimento" ? "Lembrete de vencimento enviado" : "Cobrança de atraso enviada";
+  const titulo = modelo === "lembrete_vencimento_cliente_contabil" ? "Lembrete de vencimento enviado" : "Cobrança de atraso enviada";
   await db.from("os_registros").upsert(
     [
       { user_id: userId, colecao: "fos_history_events", id: "__colecao", dados: {} },
