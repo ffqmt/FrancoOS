@@ -1,5 +1,5 @@
 import { TabelaLancamentos } from "@/components/TabelaLancamentos";
-import { hoje, type Lancamento } from "@/lib/formato";
+import { hoje, SELECT_LANCAMENTO, type Contato, type Lancamento } from "@/lib/formato";
 import { supabaseServer } from "@/lib/supabase";
 import { criarLancamento } from "./actions";
 
@@ -17,7 +17,11 @@ export default async function Lancamentos({
     : "abertas") as Filtro;
 
   const supabase = await supabaseServer();
-  let consulta = supabase.from("lancamentos").select("*").eq("tipo", tipo);
+  const { data: contatosData } = await supabase.from("os_contatos").select("*").eq("ativo", true).order("nome");
+  const contatos = (contatosData ?? []) as Contato[];
+  const parceiros = contatos.filter((c) => c.papel === "parceiro" || c.papel === "indicador");
+
+  let consulta = supabase.from("os_lancamentos").select(SELECT_LANCAMENTO).eq("tipo", tipo);
   if (filtro === "abertas") consulta = consulta.is("pago_em", null);
   if (filtro === "atrasadas") consulta = consulta.is("pago_em", null).lt("vencimento", hoje());
   if (filtro === "pagas") consulta = consulta.not("pago_em", "is", null);
@@ -38,7 +42,14 @@ export default async function Lancamentos({
         </label>
         <label>
           {tipo === "pagar" ? "Credor" : "Cliente"}
-          <input name="contraparte" />
+          <select name="contato_id" defaultValue="">
+            <option value="">-</option>
+            {contatos.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.nome} ({c.papel})
+              </option>
+            ))}
+          </select>
         </label>
         <label>
           Valor (R$)
@@ -56,6 +67,26 @@ export default async function Lancamentos({
           Repetir por (meses)
           <input name="repetir" type="number" min={1} max={36} defaultValue={1} />
         </label>
+        {tipo === "receber" && parceiros.length > 0 && (
+          <>
+            <label>
+              Repasse para parceiro
+              <select name="parceiro_id" defaultValue="">
+                <option value="">Sem repasse</option>
+                {parceiros.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.nome}
+                    {c.comissao_percentual ? ` (${c.comissao_percentual}%)` : ""}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              % do repasse
+              <input name="repasse_percentual" inputMode="decimal" placeholder="10" />
+            </label>
+          </>
+        )}
         <button className="botao">Adicionar</button>
       </form>
 

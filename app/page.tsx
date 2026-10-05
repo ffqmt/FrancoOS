@@ -22,7 +22,7 @@ export default function Home() {
     <>
       <div className="container">
         <header className="topo">
-          <span className="marca">FrancoTech</span>
+          <span className="marca"><img src="/marca/simbolo-franco.png" alt="" width={34} height={34} /> Franco Tecnologia</span>
           <nav>
             <a href="#produtos">Produtos</a>
             <a href="#historia">História</a>

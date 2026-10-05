@@ -8,7 +8,33 @@ export type Lancamento = {
   vencimento: string;
   pago_em: string | null;
   observacao: string | null;
+  contato_id: string | null;
+  origem_id: string | null;
+  contato?: { nome: string } | null;
+  origem?: { pago_em: string | null; descricao: string } | null;
 };
+
+export type Contato = {
+  id: string;
+  nome: string;
+  papel: string;
+  documento: string | null;
+  email: string | null;
+  telefone: string | null;
+  origem: string | null;
+  pix: string | null;
+  comissao_percentual: number | null;
+  observacao: string | null;
+  ativo: boolean;
+};
+
+export const PAPEIS = ["credor", "parceiro", "indicador", "cliente", "fornecedor", "prestador", "outro"] as const;
+
+// Lançamento com o nome do contato e, no caso de repasse, o recebimento que o origina.
+export const SELECT_LANCAMENTO =
+  "*, contato:os_contatos(nome), origem:os_lancamentos!os_lancamentos_origem_id_fkey(pago_em, descricao)";
+
+export const nomeContraparte = (l: Lancamento) => l.contato?.nome ?? l.contraparte ?? "-";
 
 const moeda = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -32,6 +58,7 @@ export function dataBR(data: string) {
 
 export function situacao(l: Lancamento, ref = hoje()) {
   if (l.pago_em) return l.tipo === "pagar" ? "paga" : "recebida";
+  if (l.origem && !l.origem.pago_em) return "aguardando recebimento";
   if (l.vencimento < ref) return "atrasada";
   if (l.vencimento === ref) return "vence hoje";
   return "em aberto";

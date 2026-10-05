@@ -8,7 +8,7 @@ export default function Login() {
   return (
     <main className="login">
       <form action={acao}>
-        <h1>FrancoOS</h1>
+        <img src="/marca/logo-franco.png" alt="Franco Tecnologia" className="login-logo" />
         <label>
           E-mail
           <input name="email" type="email" required autoComplete="email" />

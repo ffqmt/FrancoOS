@@ -14,12 +14,14 @@ export default async function PainelLayout({ children }: { children: React.React
   return (
     <div className="admin">
       <aside className="lateral">
-        <strong style={{ fontFamily: "var(--titulo)", padding: "0 10px 12px" }}>FrancoOS</strong>
-        <a href="/admin">Resumo</a>
+        <strong style={{ fontFamily: "var(--titulo)", padding: "0 10px 12px", display: "flex", alignItems: "center", gap: 10 }}>
+          <img src="/marca/simbolo-franco.png" alt="" width={28} height={28} /> FrancoOS
+        </strong>
+        <a href="/admin">← Painel completo</a>
+        <a href="/admin/contas">Resumo das contas</a>
         <a href="/admin/lancamentos?tipo=pagar">A pagar</a>
         <a href="/admin/lancamentos?tipo=receber">A receber</a>
-        <span className="em-breve">Contratos (em breve)</span>
-        <span className="em-breve">Tarefas (em breve)</span>
+        <a href="/admin/contatos">Parceiros e credores</a>
         <form action={sair} style={{ marginTop: "auto" }}>
           <button className="botao secundario" style={{ width: "100%" }}>
             Sair

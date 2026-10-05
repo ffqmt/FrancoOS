@@ -1,10 +1,11 @@
-import { brl, dataBR, situacao, type Lancamento } from "@/lib/formato";
+import { brl, dataBR, nomeContraparte, situacao, type Lancamento } from "@/lib/formato";
 import { apagarLancamento, marcarPago } from "@/app/admin/(painel)/lancamentos/actions";
 
 const cor: Record<string, string> = {
   atrasada: "vermelho",
   "vence hoje": "amarelo",
   "em aberto": "",
+  "aguardando recebimento": "",
   paga: "verde",
   recebida: "verde",
 };
@@ -36,7 +37,7 @@ export function TabelaLancamentos({ itens, mostrarTipo = false }: { itens: Lanca
                   {l.descricao}
                   {l.categoria && <div style={{ color: "var(--cinza)", fontSize: ".8rem" }}>{l.categoria}</div>}
                 </td>
-                <td>{l.contraparte ?? "-"}</td>
+                <td>{nomeContraparte(l)}</td>
                 <td className={l.tipo === "pagar" ? "vermelho" : "verde"}>{brl(l.valor)}</td>
                 <td>
                   <span className={`selo ${cor[s]}`}>{s}</span>

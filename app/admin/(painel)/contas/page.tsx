@@ -1,5 +1,5 @@
 import { TabelaLancamentos } from "@/components/TabelaLancamentos";
-import { brl, hoje, somarDias, type Lancamento } from "@/lib/formato";
+import { brl, hoje, SELECT_LANCAMENTO, somarDias, type Lancamento } from "@/lib/formato";
 import { supabaseServer } from "@/lib/supabase";
 
 export default async function Resumo() {
@@ -8,12 +8,13 @@ export default async function Resumo() {
   const fimMes = somarDias(`${ref.slice(0, 8)}01`, 40).slice(0, 8) + "01";
 
   const { data } = await supabase
-    .from("lancamentos")
-    .select("*")
+    .from("os_lancamentos")
+    .select(SELECT_LANCAMENTO)
     .is("pago_em", null)
     .lt("vencimento", fimMes)
     .order("vencimento");
-  const abertos = (data ?? []) as Lancamento[];
+  // Repasse cujo cliente ainda não pagou não entra como dívida vencida.
+  const abertos = ((data ?? []) as Lancamento[]).filter((l) => !l.origem || l.origem.pago_em);
 
   const soma = (lista: Lancamento[]) => lista.reduce((t, l) => t + Number(l.valor), 0);
   const pagar = abertos.filter((l) => l.tipo === "pagar");

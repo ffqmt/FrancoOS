@@ -1,5 +1,5 @@
 import { Resend } from "resend";
-import { brl, dataBR, hoje, situacao, somarDias, type Lancamento } from "@/lib/formato";
+import { brl, dataBR, hoje, nomeContraparte, SELECT_LANCAMENTO, situacao, somarDias, type Lancamento } from "@/lib/formato";
 import { supabaseServico } from "@/lib/supabase";
 
 // Roda todo dia (vercel.json) e manda um e-mail com o que vence nos próximos dias e o que atrasou.
@@ -11,21 +11,21 @@ export async function GET(request: Request) {
   const ref = hoje();
   const dias = Number(process.env.LEMBRETE_DIAS_ANTES ?? 3);
   const { data, error } = await supabaseServico()
-    .from("lancamentos")
-    .select("*")
+    .from("os_lancamentos")
+    .select(SELECT_LANCAMENTO)
     .is("pago_em", null)
     .lte("vencimento", somarDias(ref, dias))
     .order("vencimento");
   if (error) return Response.json({ erro: error.message }, { status: 500 });
 
-  const itens = (data ?? []) as Lancamento[];
+  const itens = ((data ?? []) as Lancamento[]).filter((l) => !l.origem || l.origem.pago_em);
   if (itens.length === 0) return Response.json({ enviados: 0 });
 
   const linhas = itens
     .map(
       (l) =>
         `<tr><td>${dataBR(l.vencimento)}</td><td>${l.tipo === "pagar" ? "Pagar" : "Receber"}</td>` +
-        `<td>${escapar(l.descricao)}${l.contraparte ? ` · ${escapar(l.contraparte)}` : ""}</td>` +
+        `<td>${escapar(l.descricao)} · ${escapar(nomeContraparte(l))}</td>` +
         `<td>${brl(l.valor)}</td><td>${situacao(l, ref)}</td></tr>`,
     )
     .join("");
