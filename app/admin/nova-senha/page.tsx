@@ -10,10 +10,9 @@ export default function NovaSenha() {
   const [salvando, setSalvando] = useState(false);
 
   useEffect(() => {
-    const supabase = supabaseNavegador();
-    const codigo = new URLSearchParams(window.location.search).get("code");
-    const sessao = codigo ? supabase.auth.exchangeCodeForSession(codigo) : supabase.auth.getSession();
-    sessao.then(({ data, error }) => {
+    // O cliente do Supabase já troca o ?code= do link sozinho ao iniciar; trocar de novo aqui falha
+    // com "código já usado". getSession espera essa troca terminar.
+    supabaseNavegador().auth.getSession().then(({ data, error }) => {
       if (error || !data.session) setMensagem("O link expirou ou já foi usado. Volte ao login e peça outro.");
       else setPronto(true);
     });
