@@ -18,6 +18,7 @@ export default async function PainelLayout({ children }: { children: React.React
         <a href="/admin">Resumo</a>
         <a href="/admin/lancamentos?tipo=pagar">A pagar</a>
         <a href="/admin/lancamentos?tipo=receber">A receber</a>
+        <a href="/admin/contatos">Parceiros e credores</a>
         <span className="em-breve">Contratos (em breve)</span>
         <span className="em-breve">Tarefas (em breve)</span>
         <form action={sair} style={{ marginTop: "auto" }}>
