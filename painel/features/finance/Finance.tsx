@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useStore } from '../../data/store';
+import { BaixaModal } from './BaixaModal';
 import type { AccountsPayable, AcaoFinanceira } from '../../types';
 import { 
   Plus, X, ArrowUpRight, ArrowDownRight, FileText, Check, 
-  Clock, Mail, MessageSquare 
+  Clock, Mail, MessageSquare, Undo2
 } from 'lucide-react';
 
 export const Finance: React.FC = () => {
@@ -21,6 +22,7 @@ export const Finance: React.FC = () => {
   const [isAddPayableOpen, setIsAddPayableOpen] = useState(false);
   const [isAddInvoiceOpen, setIsAddInvoiceOpen] = useState(false);
   const [isAddActionOpen, setIsAddActionOpen] = useState(false);
+  const [baixaAberta, setBaixaAberta] = useState<{ tipo: 'receber' | 'pagar'; id: string } | null>(null);
 
   // Form State Receivable (Transaction Income)
   const [recDesc, setRecDesc] = useState('');
@@ -368,28 +370,31 @@ export const Finance: React.FC = () => {
                             <span className={`badge ${
                               tr.status === 'paid' ? 'badge-success' : hasOverdue ? 'badge-danger' : 'badge-warning'
                             }`}>
-                              {tr.status === 'paid' ? 'Recebido' : hasOverdue ? 'Vencida' : 'Aberta'}
+                              {tr.status === 'paid' ? 'Recebido' : (tr.baixas?.length ?? 0) > 0 ? 'Parcial' : hasOverdue ? 'Vencida' : 'Aberta'}
                             </span>
+                            {tr.status !== 'paid' && (tr.baixas?.length ?? 0) > 0 && (
+                              <span className="client-sublabel" style={{ display: 'block', fontSize: '0.7rem' }}>
+                                Falta {formatCurrency(tr.amount - (tr.baixas ?? []).reduce((s, b) => s + b.valor, 0))}
+                              </span>
+                            )}
                           </td>
                           <td style={{ textAlign: 'right' }}>
-                            {tr.status !== 'paid' ? (
-                              <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'flex-end' }}>
-                                <button 
-                                  className="btn btn-secondary btn-icon-text"
-                                  onClick={() => updateTransactionStatus(tr.id, 'paid')}
-                                  title="Liquidar Recebimento"
-                                >
+                            <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'flex-end' }}>
+                              {tr.status !== 'paid' ? (
+                                <button className="btn btn-secondary btn-icon-text" onClick={() => setBaixaAberta({ tipo: 'receber', id: tr.id })} title="Registrar recebimento total ou parcial">
                                   <Check size={12} /> Receber
                                 </button>
-                                <button className="btn btn-secondary" style={{ padding: '0.2rem 0.4rem', fontSize: '0.75rem' }}>
-                                  Agendar Cobrança
+                              ) : (
+                                <button className="btn btn-secondary btn-icon-text" onClick={() => setBaixaAberta({ tipo: 'receber', id: tr.id })} title="Ver baixas, nota ou desfazer">
+                                  <Undo2 size={12} /> Detalhes
                                 </button>
-                              </div>
-                            ) : (
-                              <button className="btn btn-secondary" style={{ padding: '0.2rem 0.4rem', fontSize: '0.75rem' }}>
-                                Ver Nota
-                              </button>
-                            )}
+                              )}
+                              {tr.invoiceId && invoices.find(i => i.id === tr.invoiceId)?.link && (
+                                <a className="btn btn-secondary" style={{ padding: '0.2rem 0.4rem', fontSize: '0.75rem' }} href={invoices.find(i => i.id === tr.invoiceId)!.link} target="_blank" rel="noopener noreferrer">
+                                  Ver nota
+                                </a>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       );
@@ -457,17 +462,19 @@ export const Finance: React.FC = () => {
                           <span className={`badge ${
                             ap.status === 'pago' ? 'badge-success' : hasOverdue ? 'badge-danger' : ap.status === 'previsto' ? 'badge-purple' : 'badge-warning'
                           }`}>
-                            {ap.status === 'pago' ? 'Pago' : hasOverdue ? 'Vencido' : ap.status === 'previsto' ? 'Previsto' : 'Aberto'}
+                            {ap.status === 'pago' ? 'Pago' : ap.status === 'cancelado' ? 'Cancelado' : (ap.baixas?.length ?? 0) > 0 ? 'Parcial' : hasOverdue ? 'Vencido' : ap.status === 'previsto' ? 'Previsto' : 'Aberto'}
                           </span>
+                          {ap.status !== 'pago' && (ap.baixas?.length ?? 0) > 0 && (
+                            <span className="client-sublabel" style={{ display: 'block', fontSize: '0.7rem' }}>
+                              Falta {formatCurrency(ap.valor - (ap.baixas ?? []).reduce((s, b) => s + b.valor, 0))}
+                            </span>
+                          )}
                         </td>
                         <td style={{ textAlign: 'right' }}>
-                          {ap.status !== 'pago' && ap.status !== 'cancelado' && (
+                          {ap.status !== 'cancelado' && (
                             <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'flex-end' }}>
-                              <button 
-                                className="btn btn-secondary btn-icon-text"
-                                onClick={() => updateAccountsPayableStatus(ap.id, 'pago')}
-                              >
-                                <Check size={12} /> Liquidar Pago
+                              <button className="btn btn-secondary btn-icon-text" onClick={() => setBaixaAberta({ tipo: 'pagar', id: ap.id })}>
+                                {ap.status === 'pago' ? <><Undo2 size={12} /> Detalhes</> : <><Check size={12} /> Pagar</>}
                               </button>
                             </div>
                           )}
@@ -617,6 +624,10 @@ export const Finance: React.FC = () => {
         )}
 
       </div>
+
+      {baixaAberta && (
+        <BaixaModal tipo={baixaAberta.tipo} id={baixaAberta.id} onClose={() => setBaixaAberta(null)} />
+      )}
 
       {/* MODAL 1: ADD RECEIVABLE */}
       {isAddReceivableOpen && (

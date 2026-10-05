@@ -372,6 +372,19 @@ export type TransactionType = 'income' | 'expense';
 export type TransactionCategory = 'mensalidade' | 'avulso' | 'comissao' | 'repasse' | 'imposto' | 'infra' | 'outros';
 export type TransactionStatus = 'pending' | 'paid' | 'overdue';
 
+// Uma baixa = um pagamento/recebimento real (total ou parcial). Desfazer remove a baixa
+// e o status volta a ser calculado pelo que sobrou.
+export interface Baixa {
+  id: string;
+  data: string;
+  valor: number;
+  contaId?: string;
+  forma?: string;
+  notaId?: string;
+  observacao?: string;
+  registradaEm: string;
+}
+
 export interface Transaction {
   id: string;
   type: TransactionType;
@@ -385,6 +398,9 @@ export interface Transaction {
   invoiceId?: string;
   repasseId?: string;
   financialAccountId?: string;
+  baixas?: Baixa[];
+  // 'antes' = emitir a nota antes de receber; 'depois' = emitir ao receber; 'sem_nota' = não emite.
+  notaQuando?: 'antes' | 'depois' | 'sem_nota';
 }
 
 export interface Invoice {
@@ -394,6 +410,8 @@ export interface Invoice {
   amount: number;
   issueDate: string;
   status: 'draft' | 'issued' | 'cancelled';
+  link?: string;
+  transactionId?: string;
 }
 
 export interface PartnerRepayment {
@@ -463,6 +481,7 @@ export interface AccountsPayable {
   categoria: string;
   observacoes?: string;
   financialAccountId?: string;
+  baixas?: Baixa[];
 }
 
 export interface AcaoFinanceira {

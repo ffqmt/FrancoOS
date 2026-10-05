@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import type { Lead, Client, Company, Contact, Service, Contract, Task, Transaction, Invoice, PartnerRepayment, AccountsPayable, AcaoFinanceira, LeadStatus, TaskStatus, TransactionStatus, ClientDocument, ClientHistoryEvent, Partner, FinancialAccount, FinancialEvent, FinancialEventStatus, FinancialAutomationRule, ManualFinancialEntry, ManualFinancialEntryStatus, PipelineStage, Opportunity, SalesActivity, SalesProposal, SalesCommunicationTemplate, ProspectingList, SalesAutomationRule, SalesSettings, SalesPlaybook, SalesObjection, SalesOutboundMessageLog } from '../types';
+import type { Lead, Client, Company, Contact, Service, Contract, Task, Transaction, Invoice, Baixa, PartnerRepayment, AccountsPayable, AcaoFinanceira, LeadStatus, TaskStatus, TransactionStatus, ClientDocument, ClientHistoryEvent, Partner, FinancialAccount, FinancialEvent, FinancialEventStatus, FinancialAutomationRule, ManualFinancialEntry, ManualFinancialEntryStatus, PipelineStage, Opportunity, SalesActivity, SalesProposal, SalesCommunicationTemplate, ProspectingList, SalesAutomationRule, SalesSettings, SalesPlaybook, SalesObjection, SalesOutboundMessageLog } from '../types';
 import { mockServices, mockFinancialAccounts, mockFinancialAutomationRules, mockPipelineStages, mockSalesCommunicationTemplates, mockSalesAutomationRules, mockSalesSettings, mockSalesPlaybooks, mockSalesObjections } from './mockData';
 import { carregarEstado, limparEstado, salvarColecao, temPendencias } from './persistencia';
 
@@ -63,6 +63,12 @@ interface StoreContextType {
   // Accounts Payable Actions
   addAccountsPayable: (ap: Omit<AccountsPayable, 'id'>) => AccountsPayable;
   updateAccountsPayableStatus: (id: string, status: AccountsPayable['status'], paymentDate?: string, financialAccountId?: string) => void;
+
+  // Baixas (total ou parcial) e desfazer, para contas a receber e a pagar
+  registrarBaixa: (tipo: 'receber' | 'pagar', id: string, baixa: Omit<Baixa, 'id' | 'registradaEm'>, extraReceber?: Partial<Transaction>) => void;
+  desfazerBaixa: (tipo: 'receber' | 'pagar', id: string, baixaId?: string) => void;
+  atualizarTransacao: (id: string, mudancas: Partial<Transaction>) => void;
+  atualizarNota: (id: string, mudancas: Partial<Invoice>) => void;
 
   // Financial Actions / Agenda (legacy — still used by ContractDetailDrawer)
   addFinancialAction: (action: Omit<AcaoFinanceira, 'id'>) => AcaoFinanceira;
@@ -805,6 +811,81 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     save('fos_payables', updated);
   };
 
+  const somaBaixas = (b?: Baixa[]) => (b ?? []).reduce((s, x) => s + x.valor, 0);
+  const hojeISO = () => new Date().toISOString().split('T')[0];
+
+  const registrarBaixa = (tipo: 'receber' | 'pagar', id: string, dados: Omit<Baixa, 'id' | 'registradaEm'>, extraReceber?: Partial<Transaction>) => {
+    const baixa: Baixa = { ...dados, id: 'bx_' + Date.now(), registradaEm: new Date().toISOString() };
+    if (tipo === 'receber') {
+      const updated = transactions.map(t => {
+        if (t.id !== id) return t;
+        const baixas = [...(t.baixas ?? []), baixa];
+        const quitado = somaBaixas(baixas) >= t.amount - 0.005;
+        return {
+          ...t, ...extraReceber, baixas,
+          status: quitado ? 'paid' as TransactionStatus : t.status,
+          paymentDate: quitado ? baixa.data : t.paymentDate,
+          financialAccountId: baixa.contaId || t.financialAccountId,
+          invoiceId: baixa.notaId || extraReceber?.invoiceId || t.invoiceId,
+        };
+      });
+      setTransactions(updated);
+      save('fos_transactions', updated);
+    } else {
+      const updated = accountsPayables.map(ap => {
+        if (ap.id !== id) return ap;
+        const baixas = [...(ap.baixas ?? []), baixa];
+        const quitado = somaBaixas(baixas) >= ap.valor - 0.005;
+        return {
+          ...ap, baixas,
+          status: quitado ? 'pago' as AccountsPayable['status'] : ap.status,
+          dataPagamento: quitado ? baixa.data : ap.dataPagamento,
+          financialAccountId: baixa.contaId || ap.financialAccountId,
+        };
+      });
+      setAccountsPayables(updated);
+      save('fos_payables', updated);
+    }
+  };
+
+  // Sem baixaId: desfaz tudo (inclusive itens marcados como pagos antes de existir o histórico de baixas).
+  const desfazerBaixa = (tipo: 'receber' | 'pagar', id: string, baixaId?: string) => {
+    const hoje = hojeISO();
+    if (tipo === 'receber') {
+      const updated = transactions.map(t => {
+        if (t.id !== id) return t;
+        const baixas = baixaId ? (t.baixas ?? []).filter(b => b.id !== baixaId) : [];
+        const quitado = baixas.length > 0 && somaBaixas(baixas) >= t.amount - 0.005;
+        const status: TransactionStatus = quitado ? 'paid' : t.dueDate < hoje ? 'overdue' : 'pending';
+        return { ...t, baixas, status, paymentDate: quitado ? t.paymentDate : undefined };
+      });
+      setTransactions(updated);
+      save('fos_transactions', updated);
+    } else {
+      const updated = accountsPayables.map(ap => {
+        if (ap.id !== id) return ap;
+        const baixas = baixaId ? (ap.baixas ?? []).filter(b => b.id !== baixaId) : [];
+        const quitado = baixas.length > 0 && somaBaixas(baixas) >= ap.valor - 0.005;
+        const status: AccountsPayable['status'] = quitado ? 'pago' : ap.vencimento < hoje ? 'vencido' : 'aberto';
+        return { ...ap, baixas, status, dataPagamento: quitado ? ap.dataPagamento : undefined };
+      });
+      setAccountsPayables(updated);
+      save('fos_payables', updated);
+    }
+  };
+
+  const atualizarTransacao = (id: string, mudancas: Partial<Transaction>) => {
+    const updated = transactions.map(t => t.id === id ? { ...t, ...mudancas } : t);
+    setTransactions(updated);
+    save('fos_transactions', updated);
+  };
+
+  const atualizarNota = (id: string, mudancas: Partial<Invoice>) => {
+    const updated = invoices.map(i => i.id === id ? { ...i, ...mudancas } : i);
+    setInvoices(updated);
+    save('fos_invoices', updated);
+  };
+
   const addFinancialAction = (faData: Omit<AcaoFinanceira, 'id'>) => {
     const newFa: AcaoFinanceira = {
       ...faData,
@@ -974,6 +1055,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       addTransaction, updateTransactionStatus, addInvoice, updateInvoiceStatus,
       addPartnerRepayment, updatePartnerRepaymentStatus,
       addAccountsPayable, updateAccountsPayableStatus,
+      registrarBaixa, desfazerBaixa, atualizarTransacao, atualizarNota,
       addFinancialAction, updateFinancialActionStatus,
       addFinancialAccount, updateFinancialAccount, toggleFinancialAccountStatus,
       addFinancialEvent, updateFinancialEvent, updateFinancialEventStatus,
