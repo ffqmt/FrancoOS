@@ -1,9 +1,11 @@
 import { dataBR, hoje, somarDias } from "@/lib/formato";
+import { gerarMensalidades } from "@/lib/mensalidades";
 import { supabaseServico } from "@/lib/supabase";
 
 // Roda todo dia (vercel.json): manda pelo WhatsApp do AUTAX o lembrete de vencimento
 // (3 dias antes e no dia) e a cobrança de atraso (3 e 7 dias depois) das contas a receber
-// do painel. Só envia de verdade com COBRANCA_WHATSAPP_ATIVA=1; sem isso devolve a lista
+// do painel. Antes cria as mensalidades do mês pelos contratos (sempre, mesmo em simulação).
+// Só envia de verdade com COBRANCA_WHATSAPP_ATIVA=1; sem isso devolve a lista
 // do que mandaria. ?simular=1 força a simulação mesmo ligado.
 
 type Baixa = { valor: number };
@@ -57,6 +59,10 @@ export async function GET(request: Request) {
   }
 
   const db = supabaseServico();
+  const ref = hoje();
+  // Primeiro cria as mensalidades do mês pelos contratos, para os avisos de hoje já enxergarem.
+  const mensalidades = await gerarMensalidades(db, ref);
+
   const { data, error } = await db
     .from("os_registros")
     .select("colecao, id, dados, user_id")
@@ -70,7 +76,6 @@ export async function GET(request: Request) {
     linhas.filter((l) => l.colecao === "fos_clients").map((l) => [l.id, String((l.dados as { name?: string }).name ?? "")]),
   );
 
-  const ref = hoje();
   const resultado: { cliente: string; contato: string; modelo: string; valor: string; vencimento: string; status: string }[] = [];
 
   for (const linha of linhas.filter((l) => l.colecao === "fos_transactions")) {
@@ -130,7 +135,7 @@ export async function GET(request: Request) {
     }
   }
 
-  return Response.json({ simulado: simular, referencia: ref, ate: somarDias(ref, 3), avisos: resultado });
+  return Response.json({ simulado: simular, referencia: ref, mensalidadesCriadas: mensalidades.criadas, ate: somarDias(ref, 3), avisos: resultado });
 }
 
 async function registrarHistorico(
