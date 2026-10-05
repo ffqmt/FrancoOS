@@ -52,7 +52,8 @@ export async function proxy(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user && url.pathname !== "/admin/login") {
+  const publica = url.pathname === "/admin/login" || url.pathname === "/admin/nova-senha";
+  if (!user && !publica) {
     const login = request.nextUrl.clone();
     login.pathname = "/admin/login";
     login.search = "";

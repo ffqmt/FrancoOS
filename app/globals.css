@@ -71,6 +71,8 @@ input, select, textarea { background: var(--painel); color: var(--texto); border
 .login-logo { width: 150px; align-self: center; margin-bottom: 12px; filter: drop-shadow(0 0 24px rgba(60, 200, 245, .25)); }
 .login { background: radial-gradient(ellipse at top, rgba(60, 200, 245, .10), transparent 60%), var(--bg); }
 .erro { color: var(--vermelho); font-size: .9rem; }
+.aviso { color: var(--texto-suave); font-size: .9rem; }
+button.link { background: none; border: 0; color: var(--destaque); cursor: pointer; font: inherit; font-size: .9rem; padding: 0; }
 
 @media (max-width: 720px) {
   .admin { grid-template-columns: 1fr; }
