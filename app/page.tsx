@@ -5,7 +5,7 @@ const ADMIN_URL = "https://admin.francotech.com.br";
 const ferramentas = [
   { nome: "AUTAX", texto: "Automação fiscal e reforma tributária", link: "https://autax.app.br" },
   { nome: "Contai", texto: "Contabilidade com inteligência artificial", link: "https://contai.app.br" },
-  { nome: "Medcheck", texto: "Acesso ao Medcheck", link: "" },
+  { nome: "Medcheck", texto: "Acesso ao Medcheck", link: "https://medcheck.francotech.com.br" },
 ];
 
 const produtos = [
