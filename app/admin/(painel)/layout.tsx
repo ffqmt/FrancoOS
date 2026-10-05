@@ -15,12 +15,11 @@ export default async function PainelLayout({ children }: { children: React.React
     <div className="admin">
       <aside className="lateral">
         <strong style={{ fontFamily: "var(--titulo)", padding: "0 10px 12px" }}>FrancoOS</strong>
-        <a href="/admin">Resumo</a>
+        <a href="/admin">← Painel completo</a>
+        <a href="/admin/contas">Resumo das contas</a>
         <a href="/admin/lancamentos?tipo=pagar">A pagar</a>
         <a href="/admin/lancamentos?tipo=receber">A receber</a>
         <a href="/admin/contatos">Parceiros e credores</a>
-        <span className="em-breve">Contratos (em breve)</span>
-        <span className="em-breve">Tarefas (em breve)</span>
         <form action={sair} style={{ marginTop: "auto" }}>
           <button className="botao secundario" style={{ width: "100%" }}>
             Sair
