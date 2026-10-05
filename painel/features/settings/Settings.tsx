@@ -1,5 +1,6 @@
 import React from 'react';
 import { useStore } from '../../data/store';
+import { SalesSettingsTab } from '../crm/components/SalesSettingsTab';
 import { RefreshCw, Shield, HardDrive, Info } from 'lucide-react';
 
 export const Settings: React.FC = () => {
@@ -49,11 +50,15 @@ export const Settings: React.FC = () => {
             <div className="settings-info-item flex items-center gap-2">
               <HardDrive size={16} className="info-icon text-info" />
               <div>
-                <strong>Persistência:</strong> <span>Supabase (tabela os_estado)</span>
+                <strong>Persistência:</strong> <span>Supabase (tabela os_registros)</span>
               </div>
             </div>
           </div>
         </div>
+      </div>
+      <div>
+        <h3 className="card-title">Comercial (CRM): perfil de cliente ideal, etapas do funil e regras</h3>
+        <SalesSettingsTab />
       </div>
     </div>
   );

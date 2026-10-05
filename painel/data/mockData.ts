@@ -40,8 +40,41 @@ export const mockServices: Service[] = [
     description: 'Admissão, demissão, processamento mensal de folha e envio do eSocial.',
     price: 600,
     billingCycle: 'mensal'
+  },
+  {
+    id: 's_autax',
+    name: 'AUTAX',
+    category: 'produto_digital',
+    description: 'Software da Franco Tecnologia para automatizar rotinas fiscais e contábeis (autax.app.br). Preço por plano.',
+    price: 0,
+    billingCycle: 'mensal'
+  },
+  {
+    id: 's_contai',
+    name: 'Contai',
+    category: 'produto_digital',
+    description: 'Software da Franco Tecnologia para escritórios contábeis (contai.app.br). Preço por plano.',
+    price: 0,
+    billingCycle: 'mensal'
+  },
+  {
+    id: 's_consultoria',
+    name: 'Consultoria em Tecnologia para Contabilidade',
+    category: 'consultoria',
+    description: 'Diagnóstico, implantação de sistemas e processos digitais para escritórios e empresas.',
+    price: 0,
+    billingCycle: 'unico'
+  },
+  {
+    id: 's_automacao',
+    name: 'Automações sob Medida',
+    category: 'automacao',
+    description: 'Robôs e integrações para eliminar trabalho manual (planilhas, portais, notas, WhatsApp).',
+    price: 0,
+    billingCycle: 'unico'
   }
 ];
+
 
 export const mockLeads: Lead[] = [
   {

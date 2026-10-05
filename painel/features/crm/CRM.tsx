@@ -7,8 +7,7 @@ import { SalesProposalsTab } from './components/SalesProposalsTab';
 import { ProspectingTab } from './components/ProspectingTab';
 import { SalesAgentTab } from './components/SalesAgentTab';
 import { SalesTemplatesTab } from './components/SalesTemplatesTab';
-import { SalesSettingsTab } from './components/SalesSettingsTab';
-import { TrendingUp, Users, CheckSquare, DollarSign, Bot, Calendar, FileText, Settings, Search } from 'lucide-react';
+import { TrendingUp, Users, CheckSquare, DollarSign, Bot, Calendar, Search } from 'lucide-react';
 
 export const CRM: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>('overview');
@@ -65,19 +64,7 @@ export const CRM: React.FC = () => {
           className={`page-tab ${activeTab === 'agent' ? 'active' : ''}`}
           onClick={() => setActiveTab('agent')}
         >
-          <Bot size={14} style={{ color: 'var(--accent-primary)' }} /> Agente Comercial
-        </button>
-        <button 
-          className={`page-tab ${activeTab === 'templates' ? 'active' : ''}`}
-          onClick={() => setActiveTab('templates')}
-        >
-          <FileText size={14} /> Roteiros / Templates
-        </button>
-        <button 
-          className={`page-tab ${activeTab === 'settings' ? 'active' : ''}`}
-          onClick={() => setActiveTab('settings')}
-        >
-          <Settings size={14} /> Configurações
+          <Bot size={14} style={{ color: 'var(--accent-primary)' }} /> Agente e Roteiros
         </button>
       </div>
 
@@ -89,9 +76,15 @@ export const CRM: React.FC = () => {
         {activeTab === 'activities' && <SalesActivitiesTab />}
         {activeTab === 'proposals' && <SalesProposalsTab />}
         {activeTab === 'prospecting' && <ProspectingTab />}
-        {activeTab === 'agent' && <SalesAgentTab />}
-        {activeTab === 'templates' && <SalesTemplatesTab />}
-        {activeTab === 'settings' && <SalesSettingsTab />}
+        {activeTab === 'agent' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+            <SalesAgentTab />
+            <div>
+              <h3 className="card-title">Roteiros e modelos de mensagem</h3>
+              <SalesTemplatesTab />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

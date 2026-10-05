@@ -75,7 +75,7 @@ export const ProspectingTab: React.FC = () => {
                     alignItems: 'center', 
                     justifyContent: 'space-between', 
                     padding: '0.75rem', 
-                    background: selectedList?.id === list.id ? 'rgba(99, 102, 241, 0.05)' : 'var(--bg-tertiary)',
+                    background: selectedList?.id === list.id ? 'rgba(60, 200, 245, 0.05)' : 'var(--bg-tertiary)',
                     border: `1px solid ${selectedList?.id === list.id ? 'var(--accent-primary)' : 'var(--border-color)'}`,
                     borderRadius: 'var(--radius-md)' 
                   }}
@@ -148,7 +148,7 @@ export const ProspectingTab: React.FC = () => {
                 )}
 
                 {/* Briefing Box */}
-                <div style={{ background: 'rgba(99, 102, 241, 0.03)', border: '1px dashed rgba(99, 102, 241, 0.2)', padding: '0.875rem', borderRadius: 'var(--radius-md)' }}>
+                <div style={{ background: 'rgba(60, 200, 245, 0.03)', border: '1px dashed rgba(60, 200, 245, 0.2)', padding: '0.875rem', borderRadius: 'var(--radius-md)' }}>
                   <h5 className="font-semibold text-accent" style={{ fontSize: '0.8125rem', margin: '0 0 0.4rem' }}>Briefing de abordagem gerado pelo Agente</h5>
                   <p className="text-secondary" style={{ fontSize: '0.75rem', margin: 0, lineHeight: 1.4 }}>
                     Oferecer {selectedList.serviceFocus || 'Contabilidade e BPO'}. Foco em mostrar como a Franco remove a burocracia do segmento de {selectedList.targetSegment || 'serviços'}. Canal recomendado: {selectedList.channel.toUpperCase()}.

@@ -810,7 +810,7 @@ export const ContractFormDrawer: React.FC<ContractFormDrawerProps> = ({ contract
                         const p = partners.find(x => x.id === partnerId);
                         if (!p) return null;
                         return (
-                          <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: 'rgba(139,92,246,0.08)', borderRadius: 'var(--radius)', border: '1px solid rgba(139,92,246,0.25)' }}>
+                          <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: 'rgba(245, 192, 74,0.08)', borderRadius: 'var(--radius)', border: '1px solid rgba(245, 192, 74,0.25)' }}>
                             <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', fontSize: '0.8rem' }}>
                               <div><span style={{ color: 'var(--text-muted)' }}>Parceiro:</span> <strong>{p.name}</strong></div>
                               {p.email && <div><span style={{ color: 'var(--text-muted)' }}>E-mail:</span> {p.email}</div>}

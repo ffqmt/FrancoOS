@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { Lead, Client, Company, Contact, Service, Contract, Task, Transaction, Invoice, PartnerRepayment, AccountsPayable, AcaoFinanceira, LeadStatus, TaskStatus, TransactionStatus, ClientDocument, ClientHistoryEvent, Partner, FinancialAccount, FinancialEvent, FinancialEventStatus, FinancialAutomationRule, ManualFinancialEntry, ManualFinancialEntryStatus, PipelineStage, Opportunity, SalesActivity, SalesProposal, SalesCommunicationTemplate, ProspectingList, SalesAutomationRule, SalesSettings, SalesPlaybook, SalesObjection, SalesOutboundMessageLog } from '../types';
 import { mockServices, mockFinancialAccounts, mockFinancialAutomationRules, mockPipelineStages, mockSalesCommunicationTemplates, mockSalesAutomationRules, mockSalesSettings, mockSalesPlaybooks, mockSalesObjections } from './mockData';
-import { carregarEstado, limparEstado, salvarColecao } from './persistencia';
+import { carregarEstado, limparEstado, salvarColecao, temPendencias } from './persistencia';
 
 interface StoreContextType {
   leads: Lead[];
@@ -234,16 +234,33 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     fos_sales_message_logs: [setSalesOutboundMessageLogs, []],
   });
 
-  // Carrega do Supabase
+  // Carrega do Supabase e recarrega ao voltar para a aba, para trazer o que entrou por fora
+  // (por exemplo, clientes e combinados cadastrados direto no banco pelo assistente).
   useEffect(() => {
+    const aplicar = (salvo: Record<string, unknown>) => {
+      for (const [chave, [definir, inicial]] of Object.entries(colecoes())) {
+        definir(chave in salvo ? salvo[chave] : inicial);
+      }
+    };
     carregarEstado()
       .then((salvo) => {
-        for (const [chave, [definir, inicial]] of Object.entries(colecoes())) {
-          definir(chave in salvo ? salvo[chave] : inicial);
-        }
+        aplicar(salvo);
         setCarregado(true);
       })
       .catch((e) => setErroCarga(e?.message ?? String(e)));
+
+    let ultimo = Date.now();
+    const aoVoltar = () => {
+      if (document.visibilityState !== 'visible' || temPendencias() || Date.now() - ultimo < 30000) return;
+      ultimo = Date.now();
+      carregarEstado().then((salvo) => !temPendencias() && aplicar(salvo)).catch(() => {});
+    };
+    document.addEventListener('visibilitychange', aoVoltar);
+    window.addEventListener('focus', aoVoltar);
+    return () => {
+      document.removeEventListener('visibilitychange', aoVoltar);
+      window.removeEventListener('focus', aoVoltar);
+    };
   }, []);
 
   const save = (key: string, data: any) => {

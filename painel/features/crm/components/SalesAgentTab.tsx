@@ -208,7 +208,7 @@ export const SalesAgentTab: React.FC = () => {
               </div>
             )}
 
-            <div style={{ display: 'flex', gap: '0.4rem', padding: '0.625rem 0.75rem', background: 'rgba(99,102,241,0.02)', border: '1px dashed rgba(99,102,241,0.2)', borderRadius: 'var(--radius-sm)', marginTop: '0.5rem' }}>
+            <div style={{ display: 'flex', gap: '0.4rem', padding: '0.625rem 0.75rem', background: 'rgba(60, 200, 245,0.02)', border: '1px dashed rgba(60, 200, 245,0.2)', borderRadius: 'var(--radius-sm)', marginTop: '0.5rem' }}>
               <Info size={14} className="text-accent" style={{ marginTop: '0.1rem', flexShrink: 0 }} />
               <span className="text-muted" style={{ fontSize: '0.72rem', lineHeight: 1.3 }}>
                 <strong>Modo preparação:</strong> nenhuma mensagem ou e-mail real será enviado de forma externa.

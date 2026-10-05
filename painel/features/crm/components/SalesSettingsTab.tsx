@@ -24,7 +24,7 @@ export const SalesSettingsTab: React.FC = () => {
   // New Pipeline Stage state
   const [stageName, setStageName] = useState('');
   const [stageProb, setStageProb] = useState(50);
-  const [stageColor, setStageColor] = useState('#8b5cf6');
+  const [stageColor, setStageColor] = useState('#f5c04a');
 
   // New Automation Rule state
   const [ruleName, setRuleName] = useState('');

@@ -132,7 +132,7 @@ const SpecializedPlaceholder: React.FC<PlaceholderProps> = ({ tab }) => {
         .placeholder-icon-box.blue { background: rgba(14, 165, 233, 0.12); color: var(--info); }
         .placeholder-icon-box.green { background: rgba(34, 197, 94, 0.12); color: var(--success); }
         .placeholder-icon-box.orange { background: rgba(249, 115, 22, 0.12); color: var(--warning); }
-        .placeholder-icon-box.purple { background: rgba(99, 102, 241, 0.12); color: var(--accent-primary); }
+        .placeholder-icon-box.purple { background: rgba(60, 200, 245, 0.12); color: var(--accent-primary); }
         .placeholder-icon-box.info { background: rgba(6, 182, 212, 0.12); color: var(--info); }
 
         .placeholder-title {

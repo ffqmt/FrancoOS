@@ -88,7 +88,7 @@ export const CRMOverviewTab: React.FC<CRMOverviewTabProps> = ({ setActiveTab }) 
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             {newLeads.length > 0 && (
-              <div style={{ display: 'flex', gap: '0.75rem', padding: '0.75rem', background: 'rgba(99, 102, 241, 0.05)', borderRadius: 'var(--radius-md)', border: '1px solid rgba(99, 102, 241, 0.15)' }}>
+              <div style={{ display: 'flex', gap: '0.75rem', padding: '0.75rem', background: 'rgba(60, 200, 245, 0.05)', borderRadius: 'var(--radius-md)', border: '1px solid rgba(60, 200, 245, 0.15)' }}>
                 <Users size={16} className="text-accent" style={{ marginTop: '0.1rem' }} />
                 <div>
                   <span className="font-semibold text-primary" style={{ fontSize: '0.85rem' }}>{newLeads.length} leads novos sem contato</span>

@@ -151,7 +151,7 @@ export const ContractDetailDrawer: React.FC<ContractDetailDrawerProps> = ({ cont
         <div className="drawer-header" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '0.5rem', padding: '1.25rem 1.5rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'flex-start' }}>
             <div className="drawer-header-left" style={{ gap: '0.85rem' }}>
-              <div style={{ width: 42, height: 42, borderRadius: 'var(--radius)', background: 'rgba(139,92,246,0.2)', border: '1px solid rgba(139,92,246,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <div style={{ width: 42, height: 42, borderRadius: 'var(--radius)', background: 'rgba(245, 192, 74,0.2)', border: '1px solid rgba(245, 192, 74,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 <FileText size={20} style={{ color: 'var(--color-accent)' }} />
               </div>
               <div>

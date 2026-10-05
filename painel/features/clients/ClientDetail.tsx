@@ -1409,13 +1409,13 @@ export const ClientDetail: React.FC<ClientDetailProps> = ({ client, onBack }) =>
           width: 56px;
           height: 56px;
           border-radius: var(--radius-md);
-          background: rgba(99, 102, 241, 0.12);
+          background: rgba(60, 200, 245, 0.12);
           color: var(--accent-primary);
           display: flex;
           align-items: center;
           justify-content: center;
-          border: 1px solid rgba(99, 102, 241, 0.25);
-          box-shadow: 0 0 15px rgba(99, 102, 241, 0.1);
+          border: 1px solid rgba(60, 200, 245, 0.25);
+          box-shadow: 0 0 15px rgba(60, 200, 245, 0.1);
         }
 
         .client-title-row {
@@ -1464,9 +1464,9 @@ export const ClientDetail: React.FC<ClientDetailProps> = ({ client, onBack }) =>
         }
 
         .meta-badge.tag-highlight {
-          border-color: rgba(99, 102, 241, 0.2);
+          border-color: rgba(60, 200, 245, 0.2);
           color: var(--accent-primary);
-          background: rgba(99, 102, 241, 0.05);
+          background: rgba(60, 200, 245, 0.05);
         }
 
         .header-quick-actions {
@@ -1537,8 +1537,8 @@ export const ClientDetail: React.FC<ClientDetailProps> = ({ client, onBack }) =>
 
         .tab-link.active {
           color: var(--text-primary);
-          background: rgba(99, 102, 241, 0.1);
-          border: 1px solid rgba(99, 102, 241, 0.2);
+          background: rgba(60, 200, 245, 0.1);
+          border: 1px solid rgba(60, 200, 245, 0.2);
         }
 
         .tab-pill {
@@ -2074,8 +2074,8 @@ export const ClientDetail: React.FC<ClientDetailProps> = ({ client, onBack }) =>
 
         .doc-mini-tag {
           font-size: 0.625rem;
-          background: rgba(99, 102, 241, 0.05);
-          border: 1px solid rgba(99, 102, 241, 0.15);
+          background: rgba(60, 200, 245, 0.05);
+          border: 1px solid rgba(60, 200, 245, 0.15);
           color: var(--accent-primary);
           padding: 0.05rem 0.25rem;
           border-radius: var(--radius-sm);
@@ -2101,8 +2101,8 @@ export const ClientDetail: React.FC<ClientDetailProps> = ({ client, onBack }) =>
 
         .module-app-card.active {
           opacity: 1;
-          border-color: rgba(99, 102, 241, 0.3);
-          box-shadow: 0 4px 20px rgba(99, 102, 241, 0.08);
+          border-color: rgba(60, 200, 245, 0.3);
+          box-shadow: 0 4px 20px rgba(60, 200, 245, 0.08);
         }
 
         .module-app-header {
@@ -2126,7 +2126,7 @@ export const ClientDetail: React.FC<ClientDetailProps> = ({ client, onBack }) =>
           justify-content: center;
         }
 
-        .module-app-icon-wrapper.purple { background: rgba(99, 102, 241, 0.12); color: var(--accent-primary); }
+        .module-app-icon-wrapper.purple { background: rgba(60, 200, 245, 0.12); color: var(--accent-primary); }
         .module-app-icon-wrapper.blue { background: rgba(14, 165, 233, 0.12); color: var(--info); }
         .module-app-icon-wrapper.green { background: rgba(34, 197, 94, 0.12); color: var(--success); }
         .module-app-icon-wrapper.orange { background: rgba(249, 115, 22, 0.12); color: var(--warning); }

@@ -7,8 +7,8 @@ Site da FrancoTech e painel de gestão da operação, num único projeto Next.js
 
 ## Painel completo (`/admin`)
 
-As telas do protótipo antigo (pasta `painel/`), agora salvando no Supabase na tabela `os_estado`
-(`supabase/migrations/0002_estado_painel.sql`), um registro por coleção e por usuário:
+As telas do protótipo antigo (pasta `painel/`), agora salvando no Supabase na tabela `os_registros`
+(`supabase/migrations/0003_registros_painel.sql`), uma linha por item (cliente, lead, contrato...) e por usuário, o que permite consultar e incluir itens direto no banco:
 
 - Dashboard executivo; CRM com leads, funil kanban, atividades, propostas, listas de prospecção, roteiros e agente comercial.
 - Catálogo de serviços; clientes e CNPJs com ficha completa (origem, contatos, documentos, histórico).

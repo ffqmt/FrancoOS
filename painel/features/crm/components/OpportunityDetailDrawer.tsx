@@ -235,7 +235,7 @@ export const OpportunityDetailDrawer: React.FC<OpportunityDetailDrawerProps> = (
               )}
 
               {/* Suggestions / Playbook tips */}
-              <div className="glass-card mt-1" style={{ padding: '1rem', background: 'rgba(99, 102, 241, 0.03)', border: '1px dashed rgba(99, 102, 241, 0.2)' }}>
+              <div className="glass-card mt-1" style={{ padding: '1rem', background: 'rgba(60, 200, 245, 0.03)', border: '1px dashed rgba(60, 200, 245, 0.2)' }}>
                 <h5 className="font-semibold text-accent" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem', margin: '0 0 0.5rem' }}>
                   <Bot size={14} /> Recomendação do Agente Comercial
                 </h5>

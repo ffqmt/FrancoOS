@@ -228,8 +228,8 @@ export const AccountingOffice: React.FC = () => {
           display: flex;
           align-items: flex-start;
           gap: 1rem;
-          background: rgba(99, 102, 241, 0.08);
-          border: 1px solid rgba(99, 102, 241, 0.25);
+          background: rgba(60, 200, 245, 0.08);
+          border: 1px solid rgba(60, 200, 245, 0.25);
           padding: 1.25rem;
           border-radius: var(--radius-lg);
           margin-bottom: 0.5rem;
@@ -305,7 +305,7 @@ export const AccountingOffice: React.FC = () => {
 
         .submodule-icon-box.blue { background: rgba(14, 165, 233, 0.15); color: var(--info); }
         .submodule-icon-box.green { background: rgba(34, 197, 94, 0.15); color: var(--success); }
-        .submodule-icon-box.purple { background: rgba(99, 102, 241, 0.15); color: var(--accent-primary); }
+        .submodule-icon-box.purple { background: rgba(60, 200, 245, 0.15); color: var(--accent-primary); }
         .submodule-icon-box.orange { background: rgba(249, 115, 22, 0.15); color: var(--warning); }
         .submodule-icon-box.red { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
         .submodule-icon-box.info { background: rgba(6, 182, 212, 0.15); color: var(--info); }
@@ -379,7 +379,7 @@ export const AccountingOffice: React.FC = () => {
           align-items: center;
           justify-content: center;
           margin: 0 auto;
-          border: 1px solid rgba(99, 102, 241, 0.2);
+          border: 1px solid rgba(60, 200, 245, 0.2);
         }
 
         .color-purple {

@@ -10,7 +10,6 @@ import {
   DollarSign, 
   Settings,
   Shield,
-  Zap,
   Building2,
   Laptop,
   Cpu,
@@ -79,12 +78,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
   return (
     <aside className="sidebar">
       <div className="sidebar-brand">
-        <div className="brand-logo">
-          <Zap size={20} className="brand-logo-icon" />
-        </div>
+        <img src="/marca/simbolo-franco.png" alt="" className="brand-simbolo" />
         <div className="brand-info">
-          <span className="brand-name">FRANCO OS</span>
-          <span className="brand-tagline">Hub Operacional</span>
+          <span className="brand-name">FRANCO</span>
+          <span className="brand-tagline">TECNOLOGIA · OS</span>
         </div>
       </div>
 
@@ -162,40 +159,26 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
           border-bottom: 1px solid var(--glass-border);
         }
 
-        .brand-logo {
-          width: 32px;
-          height: 32px;
-          border-radius: var(--radius-sm);
-          background: var(--accent-gradient);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: #fff;
-          box-shadow: 0 0 12px var(--accent-glow);
-        }
-
-        .brand-logo-icon {
-          animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-          0% { transform: scale(1); }
-          50% { transform: scale(1.1); }
-          100% { transform: scale(1); }
+        .brand-simbolo {
+          width: 40px;
+          height: 40px;
+          object-fit: contain;
+          filter: drop-shadow(0 0 10px rgba(60, 200, 245, 0.35));
         }
 
         .brand-name {
           font-family: var(--font-display);
-          font-size: 1.1rem;
-          font-weight: 700;
-          letter-spacing: 0.05em;
-          color: var(--text-primary);
+          font-size: 1.2rem;
+          font-weight: 500;
+          letter-spacing: 0.14em;
+          color: var(--gold);
           line-height: 1.2;
         }
 
         .brand-tagline {
-          font-size: 0.75rem;
-          color: var(--text-muted);
+          font-size: 0.62rem;
+          letter-spacing: 0.32em;
+          color: var(--accent-primary);
           display: block;
         }
 
@@ -257,8 +240,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
 
         .nav-link.active {
           color: var(--text-primary);
-          background: rgba(99, 102, 241, 0.1);
-          border: 1px solid rgba(99, 102, 241, 0.2);
+          background: rgba(60, 200, 245, 0.1);
+          border: 1px solid rgba(60, 200, 245, 0.2);
         }
 
         .nav-link.active::before {
