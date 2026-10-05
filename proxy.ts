@@ -15,6 +15,18 @@ export async function proxy(request: NextRequest) {
     return url.pathname === request.nextUrl.pathname ? NextResponse.next() : NextResponse.rewrite(url);
   }
 
+  // Sem as variáveis do Supabase o login não funciona: mostra quais faltam em vez de um erro genérico.
+  const faltando = [
+    !process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() && "NEXT_PUBLIC_SUPABASE_URL",
+    !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim() && "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+  ].filter(Boolean);
+  if (faltando.length) {
+    return new NextResponse(`FrancoOS: faltam as variáveis ${faltando.join(", ")} na Vercel. Cadastre e faça um Redeploy.`, {
+      status: 500,
+      headers: { "content-type": "text/plain; charset=utf-8" },
+    });
+  }
+
   let response =
     url.pathname === request.nextUrl.pathname ? NextResponse.next({ request }) : NextResponse.rewrite(url, { request });
 
