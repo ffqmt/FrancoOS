@@ -35,6 +35,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab }) => {
   const getBreadcrumb = () => {
     switch (activeTab) {
       case 'dashboard': return 'Visão Geral / Dashboard Executivo';
+      case 'atendimento': return 'Visão Geral / Atendimento WhatsApp';
       case 'crm': return 'Comercial / CRM & Pipeline';
       case 'services': return 'Comercial / Catálogo de Serviços';
       case 'clients': return 'Operacional / Clientes & CNPJs';
