@@ -15,6 +15,7 @@ import { PartnersRepayments } from './features/partners/PartnersRepayments';
 import { Settings } from './features/settings/Settings';
 import { AccountingOffice } from './features/specialized/AccountingOffice';
 import { Atendimento } from './features/atendimento/Atendimento';
+import { Nivia } from './features/atendimento/Nivia';
 import { Lock, Laptop, Cpu, Target, Network, Bot } from 'lucide-react';
 
 interface PlaceholderProps {
@@ -219,6 +220,8 @@ function InnerApp() {
         return <Dashboard />;
       case 'atendimento':
         return <Atendimento />;
+      case 'nivia':
+        return <Nivia />;
       case 'crm':
         return <CRM />;
       case 'services':
