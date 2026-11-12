@@ -18,7 +18,8 @@ import {
   Bot,
   Award,
   Bell,
-  LogOut
+  LogOut,
+  MessageCircle
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -31,7 +32,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
     {
       title: 'Visão Geral',
       items: [
-        { id: 'dashboard', label: 'Dashboard Executivo', icon: LayoutDashboard }
+        { id: 'dashboard', label: 'Dashboard Executivo', icon: LayoutDashboard },
+        { id: 'atendimento', label: 'Atendimento WhatsApp', icon: MessageCircle }
       ]
     },
     {
