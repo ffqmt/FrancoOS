@@ -17,7 +17,9 @@ export default async function PainelLayout({ children }: { children: React.React
         <strong style={{ fontFamily: "var(--titulo)", padding: "0 10px 12px", display: "flex", alignItems: "center", gap: 10 }}>
           <img src="/marca/simbolo-franco.png" alt="" width={28} height={28} /> FrancoOS
         </strong>
-        <a href="/admin">← Painel completo</a>
+        <a href="/admin">← Início</a>
+        <a href="/admin/painel">Painel FrancoTech</a>
+        <a href="/admin/erp">ERP contábil</a>
         <a href="/admin/contas">Resumo das contas</a>
         <a href="/admin/lancamentos?tipo=pagar">A pagar</a>
         <a href="/admin/lancamentos?tipo=receber">A receber</a>
