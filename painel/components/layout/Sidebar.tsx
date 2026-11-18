@@ -20,7 +20,9 @@ import {
   Bell,
   LogOut,
   MessageCircle,
-  Sparkles
+  Sparkles,
+  LayoutGrid,
+  Landmark,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -113,8 +115,20 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
           </div>
         ))}
         <div className="nav-group">
-          <span className="nav-group-title">Contas com lembrete</span>
+          <span className="nav-group-title">Outros sistemas</span>
           <ul className="nav-list">
+            <li className="nav-item">
+              <a href="/admin" className="nav-link">
+                <LayoutGrid size={18} />
+                <span className="nav-label">Início</span>
+              </a>
+            </li>
+            <li className="nav-item">
+              <a href="/admin/erp" className="nav-link">
+                <Landmark size={18} />
+                <span className="nav-label">ERP contábil</span>
+              </a>
+            </li>
             <li className="nav-item">
               <a href="/admin/contas" className="nav-link">
                 <Bell size={18} />

@@ -89,6 +89,14 @@ export const AccountingOffice: React.FC = () => {
 
   return (
     <div className="accounting-office-container">
+      <a href="/admin/erp" className="concept-banner" style={{ textDecoration: 'none', color: 'inherit' }}>
+        <ArrowRight size={22} className="concept-banner-icon" />
+        <div className="concept-banner-text">
+          <h5>Abrir o ERP contábil</h5>
+          <p>Empresas, plano de contas, lançamentos, notas importadas e apurações, direto do banco.</p>
+        </div>
+      </a>
+
       {/* Concept warning banner */}
       <div className="concept-banner">
         <AlertCircle size={22} className="concept-banner-icon" />

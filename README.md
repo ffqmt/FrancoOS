@@ -5,7 +5,15 @@ Site da FrancoTech e painel de gestão da operação, num único projeto Next.js
 - `francotech.com.br`: site institucional (`app/page.tsx`).
 - `admin.francotech.com.br`: painel com login (`app/admin`). O `proxy.ts` manda esse subdomínio para `/admin`.
 
-## Painel completo (`/admin`)
+## Início (`/admin`)
+
+Depois do login, a tela inicial é a porta de entrada: escolhe entre o **Painel FrancoTech** (`/admin/painel`) e o **ERP contábil** (`/admin/erp`), com atalhos para contas, ContAi, AUTAX e Medcheck.
+
+## ERP contábil (`/admin/erp`)
+
+Lê as tabelas do ERP (em inglês, no mesmo banco): empresas, plano de contas, lançamentos com partidas, notas importadas (XML) e apurações. A leitura é feita no servidor com a chave de serviço, só para quem está em `ADMIN_EMAILS`.
+
+## Painel completo (`/admin/painel`)
 
 As telas do protótipo antigo (pasta `painel/`), agora salvando no Supabase na tabela `os_registros`
 (`supabase/migrations/0003_registros_painel.sql`), uma linha por item (cliente, lead, contrato...) e por usuário, o que permite consultar e incluir itens direto no banco:
