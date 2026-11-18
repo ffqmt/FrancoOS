@@ -19,7 +19,7 @@ export default async function PainelLayout({ children }: { children: React.React
         </strong>
         <a href="/admin">← Início</a>
         <a href="/admin/painel">Painel FrancoTech</a>
-        <a href="https://erpcontabil.vercel.app" target="_blank" rel="noopener noreferrer">ERP contábil ↗</a>
+        <a href="/erp">ERP contábil</a>
         <a href="/admin/contas">Resumo das contas</a>
         <a href="/admin/lancamentos?tipo=pagar">A pagar</a>
         <a href="/admin/lancamentos?tipo=receber">A receber</a>
