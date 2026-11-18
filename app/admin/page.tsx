@@ -1,11 +1,14 @@
 import { brl, hoje } from "@/lib/formato";
-import { erpDb } from "@/lib/erp";
+import { redirect } from "next/navigation";
+import { emailPermitido, supabaseServer, supabaseServico } from "@/lib/supabase";
 import { sair } from "./login/actions";
 
 export const metadata = { title: "FrancoOS", robots: { index: false } };
 export const dynamic = "force-dynamic";
 
 // Porta de entrada: depois do login, a pessoa escolhe para qual sistema vai.
+// O ERP contábil é o app próprio (repositório erpcontabil), com o mesmo login do Supabase.
+const ERP_URL = "https://erpcontabil.vercel.app";
 const externos = [
   { nome: "ContAi", texto: "Painel dos escritórios contábeis", link: "https://contai.app.br" },
   { nome: "AUTAX", texto: "Automação fiscal e reforma tributária", link: "https://autax.app.br" },
@@ -13,7 +16,12 @@ const externos = [
 ];
 
 export default async function Inicio() {
-  const db = await erpDb();
+  const supabase = await supabaseServer();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user || !emailPermitido(user.email)) redirect("/admin/login");
+  const db = supabaseServico();
   const ref = hoje();
 
   const [empresas, lancamentos, xmlRevisar, abertos] = await Promise.all([
@@ -55,10 +63,10 @@ export default async function Inicio() {
           </div>
         </a>
 
-        <a className="porta" href="/admin/erp">
+        <a className="porta" href={ERP_URL} target="_blank" rel="noopener noreferrer">
           <span className="rotulo">Escritório contábil</span>
           <strong>ERP contábil</strong>
-          <p>Empresas, plano de contas, lançamentos, notas importadas e apurações.</p>
+          <p>Contabilidade, fiscal e SPED, bancos, folha, patrimônio, obrigações e automações. Entra com o mesmo e-mail e senha.</p>
           <div className="porta-numeros">
             <span>
               Empresas <b>{empresas.count ?? 0}</b>
