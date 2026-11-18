@@ -7,11 +7,11 @@ Site da FrancoTech e painel de gestão da operação, num único projeto Next.js
 
 ## Início (`/admin`)
 
-Depois do login, a tela inicial é a porta de entrada: escolhe entre o **Painel FrancoTech** (`/admin/painel`) e o **ERP contábil** (`/admin/erp`), com atalhos para contas, ContAi, AUTAX e Medcheck.
+Depois do login, a tela inicial é a porta de entrada: escolhe entre o **Painel FrancoTech** (`/admin/painel`) e o **ERP contábil** (app `erpcontabil`), com atalhos para contas, ContAi, AUTAX e Medcheck.
 
-## ERP contábil (`/admin/erp`)
+## ERP contábil
 
-Lê as tabelas do ERP (em inglês, no mesmo banco): empresas, plano de contas, lançamentos com partidas, notas importadas (XML) e apurações. A leitura é feita no servidor com a chave de serviço, só para quem está em `ADMIN_EMAILS`.
+É o app próprio do repositório `erpcontabil` (erpcontabil.vercel.app), no mesmo Supabase e com o mesmo login. O Início e o painel só apontam para ele.
 
 ## Painel completo (`/admin/painel`)
 
