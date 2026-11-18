@@ -89,7 +89,7 @@ export const AccountingOffice: React.FC = () => {
 
   return (
     <div className="accounting-office-container">
-      <a href="https://erpcontabil.vercel.app" target="_blank" rel="noopener noreferrer" className="concept-banner" style={{ textDecoration: 'none', color: 'inherit' }}>
+      <a href="/erp" className="concept-banner" style={{ textDecoration: 'none', color: 'inherit' }}>
         <ArrowRight size={22} className="concept-banner-icon" />
         <div className="concept-banner-text">
           <h5>Abrir o ERP contábil</h5>

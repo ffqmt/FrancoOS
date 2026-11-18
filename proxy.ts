@@ -7,6 +7,9 @@ export async function proxy(request: NextRequest) {
   const url = request.nextUrl.clone();
   const ehAdminHost = host.startsWith("admin.");
 
+  // /erp é o ERP contábil, repassado pelo next.config: não mexe aqui.
+  if (url.pathname === "/erp" || url.pathname.startsWith("/erp/")) return NextResponse.next();
+
   if (ehAdminHost && !url.pathname.startsWith("/admin") && !url.pathname.startsWith("/api")) {
     url.pathname = `/admin${url.pathname === "/" ? "" : url.pathname}`;
   }

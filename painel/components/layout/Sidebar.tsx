@@ -124,7 +124,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
               </a>
             </li>
             <li className="nav-item">
-              <a href="https://erpcontabil.vercel.app" target="_blank" rel="noopener noreferrer" className="nav-link">
+              <a href="/erp" className="nav-link">
                 <Landmark size={18} />
                 <span className="nav-label">ERP contábil</span>
               </a>
