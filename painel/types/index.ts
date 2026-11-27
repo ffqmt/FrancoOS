@@ -395,6 +395,7 @@ export interface Transaction {
   paymentDate?: string;
   status: TransactionStatus;
   clientId?: string;
+  contractId?: string;
   invoiceId?: string;
   repasseId?: string;
   financialAccountId?: string;
