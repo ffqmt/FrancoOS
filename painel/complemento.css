@@ -129,3 +129,5 @@
 .fin-busca .form-control { width: 100%; padding-left: 2rem; }
 .fin-filtros-total { margin-left: auto; display: flex; gap: 0.6rem; align-items: baseline; font-size: 0.85rem; }
 .fin-filtros-total strong { font-size: 1rem; }
+.fin-datas { display: flex; align-items: center; gap: 0.4rem; font-size: 0.8rem; flex-wrap: wrap; }
+.fin-datas .form-control { width: auto; padding: 0.45rem 0.6rem; }

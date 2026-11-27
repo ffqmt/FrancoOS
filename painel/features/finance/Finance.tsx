@@ -53,8 +53,9 @@ const FiltrosBar: React.FC<{
   contagem: Record<Periodo, number>;
   pessoa: string; setPessoa: (p: string) => void; pessoas: string[]; rotuloPessoa: string;
   busca: string; setBusca: (b: string) => void;
+  de: string; setDe: (d: string) => void; ate: string; setAte: (d: string) => void;
   total: number; qtd: number; formatCurrency: (v: number) => string; corTotal: string;
-}> = ({ periodo, setPeriodo, contagem, pessoa, setPessoa, pessoas, rotuloPessoa, busca, setBusca, total, qtd, formatCurrency, corTotal }) => (
+}> = ({ periodo, setPeriodo, contagem, pessoa, setPessoa, pessoas, rotuloPessoa, busca, setBusca, de, setDe, ate, setAte, total, qtd, formatCurrency, corTotal }) => (
   <div className="fin-filtros">
     <div className="fin-filtros-chips">
       {PERIODOS.map(p => (
@@ -68,6 +69,15 @@ const FiltrosBar: React.FC<{
         <option value="">{rotuloPessoa}: todos</option>
         {pessoas.map(n => <option key={n} value={n}>{n}</option>)}
       </select>
+      <div className="fin-datas" title="Vencimento entre">
+        <span className="text-muted">Vencimento de</span>
+        <input type="date" className="form-control" value={de} onChange={e => setDe(e.target.value)} aria-label="Vencimento a partir de" />
+        <span className="text-muted">até</span>
+        <input type="date" className="form-control" value={ate} onChange={e => setAte(e.target.value)} aria-label="Vencimento até" />
+        {(de || ate) && (
+          <button type="button" className="btn-icon" onClick={() => { setDe(''); setAte(''); }} title="Limpar datas"><X size={14} /></button>
+        )}
+      </div>
       <div className="fin-busca">
         <Search size={14} />
         <input className="form-control" placeholder="Buscar descrição, valor, observação..." value={busca} onChange={e => setBusca(e.target.value)} />
@@ -139,6 +149,11 @@ export const Finance: React.FC = () => {
   const [payPeriodo, setPayPeriodo] = useState<Periodo>('aberto');
   const [payPessoa, setPayPessoa] = useState('');
   const [payBusca, setPayBusca] = useState('');
+  const [recDe, setRecDe] = useState('');
+  const [recAte, setRecAte] = useState('');
+  const [payDe, setPayDe] = useState('');
+  const [payAte, setPayAte] = useState('');
+  const entreDatas = (venc: string, de: string, ate: string) => (!de || venc >= de) && (!ate || venc <= ate);
 
   // --- Calculations ---
 
@@ -185,7 +200,7 @@ export const Finance: React.FC = () => {
     .filter(t => t.type === 'income')
     .map(t => ({ t, pessoa: clients.find(c => c.id === t.clientId)?.name || 'Venda Geral' }));
   const recBase = receitas.filter(({ t, pessoa }) =>
-    (!recPessoa || pessoa === recPessoa) && contem(recBusca, t.description, t.category, pessoa, t.amount, t.dueDate));
+    (!recPessoa || pessoa === recPessoa) && entreDatas(t.dueDate, recDe, recAte) && contem(recBusca, t.description, t.category, pessoa, t.amount, t.dueDate));
   const recContagem = Object.fromEntries(PERIODOS.map(p => [p.chave,
     recBase.filter(({ t }) => noPeriodo(p.chave, t.dueDate, t.status === 'paid', false, today)).length])) as Record<Periodo, number>;
   const recLista = recBase
@@ -195,7 +210,7 @@ export const Finance: React.FC = () => {
   const recPessoas = [...new Set(receitas.map(r => r.pessoa))].sort((a, b) => a.localeCompare(b));
 
   const payBase = accountsPayables.filter(ap =>
-    (!payPessoa || ap.favorecido === payPessoa) && contem(payBusca, ap.descricao, ap.favorecido, ap.categoria, ap.observacoes, ap.valor, ap.vencimento));
+    (!payPessoa || ap.favorecido === payPessoa) && entreDatas(ap.vencimento, payDe, payAte) && contem(payBusca, ap.descricao, ap.favorecido, ap.categoria, ap.observacoes, ap.valor, ap.vencimento));
   const payContagem = Object.fromEntries(PERIODOS.map(p => [p.chave,
     payBase.filter(ap => noPeriodo(p.chave, ap.vencimento, ap.status === 'pago', ap.status === 'cancelado', today)).length])) as Record<Periodo, number>;
   const payLista = payBase
@@ -439,7 +454,7 @@ export const Finance: React.FC = () => {
             </div>
             <FiltrosBar periodo={recPeriodo} setPeriodo={setRecPeriodo} contagem={recContagem}
               pessoa={recPessoa} setPessoa={setRecPessoa} pessoas={recPessoas} rotuloPessoa="Cliente"
-              busca={recBusca} setBusca={setRecBusca} total={recTotal} qtd={recLista.length}
+              busca={recBusca} setBusca={setRecBusca} de={recDe} setDe={setRecDe} ate={recAte} setAte={setRecAte} total={recTotal} qtd={recLista.length}
               formatCurrency={formatCurrency} corTotal="income-text" />
             
             <div className="table-container mt-1">
@@ -531,7 +546,7 @@ export const Finance: React.FC = () => {
             </div>
             <FiltrosBar periodo={payPeriodo} setPeriodo={setPayPeriodo} contagem={payContagem}
               pessoa={payPessoa} setPessoa={setPayPessoa} pessoas={payPessoas} rotuloPessoa="Favorecido"
-              busca={payBusca} setBusca={setPayBusca} total={payTotal} qtd={payLista.length}
+              busca={payBusca} setBusca={setPayBusca} de={payDe} setDe={setPayDe} ate={payAte} setAte={setPayAte} total={payTotal} qtd={payLista.length}
               formatCurrency={formatCurrency} corTotal="expense-text" />
 
             <div className="table-container mt-1">
