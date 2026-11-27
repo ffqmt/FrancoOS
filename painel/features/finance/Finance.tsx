@@ -158,31 +158,29 @@ export const Finance: React.FC = () => {
 
   // --- Calculations ---
 
-  // Receivables
-  const totalReceber = transactions
-    .filter(t => t.type === 'income' && t.status !== 'paid')
-    .reduce((sum, t) => sum + t.amount, 0);
-
-  const totalRecebidoMes = transactions
-    .filter(t => t.type === 'income' && t.status === 'paid' && mesDe(t.paymentDate || t.dueDate) === mesDe(today))
-    .reduce((sum, t) => sum + t.amount, 0);
-
+  // KPIs do mês atual (projeções futuras não entram no total)
+  const mesHoje = today.slice(0, 7);
+  const recebido = (v: number, st: boolean, bx?: { valor: number }[]) => st ? v : (bx ?? []).reduce((s, b) => s + b.valor, 0);
+  const recMes = transactions.filter(t => t.type === 'income' && t.dueDate.slice(0, 7) === mesHoje);
+  const totalReceber = recMes.reduce((s, t) => s + t.amount - recebido(t.amount, t.status === 'paid', t.baixas), 0);
+  const totalRecebidoMes = recMes.reduce((s, t) => s + recebido(t.amount, t.status === 'paid', t.baixas), 0);
   const totalVencidoReceber = transactions
     .filter(t => t.type === 'income' && t.status !== 'paid' && t.dueDate < today)
-    .reduce((sum, t) => sum + t.amount, 0);
+    .reduce((s, t) => s + t.amount - recebido(t.amount, false, t.baixas), 0);
+  const recProximo = transactions
+    .filter(t => t.type === 'income' && t.status !== 'paid' && t.dueDate.slice(0, 7) === proximoMes(today))
+    .reduce((s, t) => s + t.amount, 0);
 
-  // Payables
-  const totalPagar = accountsPayables
-    .filter(p => p.status !== 'pago' && p.status !== 'cancelado')
-    .reduce((sum, p) => sum + p.valor, 0);
-
-  const totalPagoMes = accountsPayables
-    .filter(p => p.status === 'pago' && mesDe(p.dataPagamento || p.vencimento) === mesDe(today))
-    .reduce((sum, p) => sum + p.valor, 0);
-
+  const payMes = accountsPayables.filter(p => p.status !== 'cancelado' && p.vencimento.slice(0, 7) === mesHoje);
+  const totalPagar = payMes.reduce((s, p) => s + p.valor - recebido(p.valor, p.status === 'pago', p.baixas), 0);
+  const totalPagoMes = payMes.reduce((s, p) => s + recebido(p.valor, p.status === 'pago', p.baixas), 0);
   const totalVencidoPagar = accountsPayables
     .filter(p => p.status !== 'pago' && p.status !== 'cancelado' && p.vencimento < today)
-    .reduce((sum, p) => sum + p.valor, 0);
+    .reduce((s, p) => s + p.valor - recebido(p.valor, false, p.baixas), 0);
+  const payProximo = accountsPayables
+    .filter(p => p.status !== 'pago' && p.status !== 'cancelado' && p.vencimento.slice(0, 7) === proximoMes(today))
+    .reduce((s, p) => s + p.valor, 0);
+  const nomeMesHoje = new Date(mesHoje + '-01T12:00:00').toLocaleDateString('pt-BR', { month: 'long' });
 
   // Invoices & Actions
   const notasPendentes = invoices.filter(i => i.status === 'draft' || i.status === 'cancelled').length; // draft/cancelled/prevista count
@@ -352,7 +350,7 @@ export const Finance: React.FC = () => {
         {/* Receitas */}
         <div className="glass-card" style={{ padding: '1.2rem' }}>
           <div className="kpi-header">
-            <span className="kpi-title">Total a Receber</span>
+            <span className="kpi-title">A receber em {nomeMesHoje}</span>
             <div className="kpi-icon-wrapper green">
               <ArrowUpRight size={20} />
             </div>
@@ -360,14 +358,15 @@ export const Finance: React.FC = () => {
           <div className="kpi-value income-text">{formatCurrency(totalReceber)}</div>
           <div className="kpi-subtext" style={{ display: 'flex', flexDirection: 'column', gap: '0.1rem' }}>
             <span>Recebido no mês: {formatCurrency(totalRecebidoMes)}</span>
-            <span className="text-danger fw-600">Vencido: {formatCurrency(totalVencidoReceber)}</span>
+            {totalVencidoReceber > 0 && <span className="text-danger fw-600">Vencido: {formatCurrency(totalVencidoReceber)}</span>}
+            <span className="text-muted">Próximo mês: {formatCurrency(recProximo)}</span>
           </div>
         </div>
 
         {/* Despesas / Pagar */}
         <div className="glass-card" style={{ padding: '1.2rem' }}>
           <div className="kpi-header">
-            <span className="kpi-title">Total a Pagar</span>
+            <span className="kpi-title">A pagar em {nomeMesHoje}</span>
             <div className="kpi-icon-wrapper red-icon">
               <ArrowDownRight size={20} />
             </div>
@@ -375,7 +374,8 @@ export const Finance: React.FC = () => {
           <div className="kpi-value expense-text">{formatCurrency(totalPagar)}</div>
           <div className="kpi-subtext" style={{ display: 'flex', flexDirection: 'column', gap: '0.1rem' }}>
             <span>Pago no mês: {formatCurrency(totalPagoMes)}</span>
-            <span className="text-danger fw-600">Vencido a Pagar: {formatCurrency(totalVencidoPagar)}</span>
+            {totalVencidoPagar > 0 && <span className="text-danger fw-600">Vencido: {formatCurrency(totalVencidoPagar)}</span>}
+            <span className="text-muted">Próximo mês: {formatCurrency(payProximo)}</span>
           </div>
         </div>
 

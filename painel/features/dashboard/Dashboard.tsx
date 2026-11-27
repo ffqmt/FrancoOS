@@ -1,17 +1,44 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useStore } from '../../data/store';
 import { 
   TrendingUp, 
-  Users, 
   CheckSquare, 
   DollarSign, 
-  ArrowUpRight,
-  Clock,
-  Briefcase
+  Clock
 } from 'lucide-react';
 
 export const Dashboard: React.FC = () => {
-  const { leads, clients, contracts, tasks, transactions, services, opportunities, salesProposals } = useStore();
+  const { clients, contracts, tasks, transactions, accountsPayables, services, opportunities, salesProposals } = useStore();
+  const brl = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
+
+  // Mês de referência dos números financeiros: o atual ou o seguinte.
+  const [mesRef, setMesRef] = useState<'atual' | 'proximo'>('atual');
+  const hoje = new Date().toISOString().split('T')[0];
+  const mesAtual = hoje.slice(0, 7);
+  const mesSeguinte = (() => { const d = new Date(mesAtual + '-01T12:00:00'); d.setMonth(d.getMonth() + 1); return d.toISOString().slice(0, 7); })();
+  const mes = mesRef === 'atual' ? mesAtual : mesSeguinte;
+  const nomeMes = (m: string) => new Date(m + '-01T12:00:00').toLocaleDateString('pt-BR', { month: 'long' });
+
+  const pagoParcial = (baixas?: { valor: number }[]) => (baixas ?? []).reduce((s, b) => s + b.valor, 0);
+  const receitasMes = transactions.filter(t => t.type === 'income' && t.dueDate.slice(0, 7) === mes);
+  const recPrevisto = receitasMes.reduce((s, t) => s + t.amount, 0);
+  const recRecebido = receitasMes.reduce((s, t) => s + (t.status === 'paid' ? t.amount : pagoParcial(t.baixas)), 0);
+  // Vencidos de meses anteriores que ainda não entraram.
+  const recAtrasado = transactions
+    .filter(t => t.type === 'income' && t.status !== 'paid' && t.dueDate.slice(0, 7) < mesAtual)
+    .reduce((s, t) => s + t.amount - pagoParcial(t.baixas), 0);
+
+  const contasMes = accountsPayables.filter(p => p.status !== 'cancelado' && p.vencimento.slice(0, 7) === mes);
+  const pagPrevisto = contasMes.reduce((s, p) => s + p.valor, 0);
+  const pagPago = contasMes.reduce((s, p) => s + (p.status === 'pago' ? p.valor : pagoParcial(p.baixas)), 0);
+  const pagAtrasado = accountsPayables
+    .filter(p => p.status !== 'pago' && p.status !== 'cancelado' && p.vencimento.slice(0, 7) < mesAtual)
+    .reduce((s, p) => s + p.valor - pagoParcial(p.baixas), 0);
+
+  const movimentosMes = [
+    ...receitasMes.map(t => ({ id: t.id, desc: t.description, data: t.dueDate, valor: t.amount, entrada: true, quitado: t.status === 'paid' })),
+    ...contasMes.map(p => ({ id: p.id, desc: `${p.favorecido}: ${p.descricao}`, data: p.vencimento, valor: p.valor, entrada: false, quitado: p.status === 'pago' })),
+  ].sort((a, b) => a.data.localeCompare(b.data));
 
   // 1. Calculations
   const activeContracts = contracts.filter(c => c.status === 'active');
@@ -22,9 +49,6 @@ export const Dashboard: React.FC = () => {
   const pendingProposalsValue = openOpportunities.reduce((sum, o) => sum + o.value, 0) || 
     (salesProposals || []).filter(p => p.status === 'sent_placeholder' || p.status === 'prepared' || p.status === 'draft').reduce((sum, p) => sum + p.total, 0);
 
-  const totalLeads = leads.length;
-  const convertedLeads = leads.filter(l => l.status === 'qualified' || (l as any).status === 'client').length;
-  const conversionRate = totalLeads > 0 ? Math.round((convertedLeads / totalLeads) * 100) : 0;
 
   const pendingTasks = tasks.filter(t => t.status !== 'done');
   const pendingTasksCount = pendingTasks.length;
@@ -39,15 +63,12 @@ export const Dashboard: React.FC = () => {
     .filter(t => t.priority === 'urgent' || t.priority === 'high')
     .slice(0, 4);
 
-  // Recent transactions
-  const recentTransactions = [...transactions]
-    .sort((a, b) => new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime())
-    .slice(0, 5);
 
   // Category distribution
   const revenueByCategory = activeContracts.reduce((acc: Record<string, number>, contract) => {
     const service = services.find(s => s.id === contract.serviceId);
-    const categoryName = service ? service.category : 'Outros';
+    const bruto = service ? service.category : 'Outros';
+    const categoryName = bruto === 'contabilidade' || bruto === 'fiscal' ? 'contabil' : bruto;
     acc[categoryName] = (acc[categoryName] || 0) + contract.monthlyValue;
     return acc;
   }, {});
@@ -67,20 +88,39 @@ export const Dashboard: React.FC = () => {
 
   return (
     <div className="dashboard-wrapper">
+      <div className="fin-filtros-chips" style={{ marginBottom: '0.75rem' }}>
+        <button type="button" className={`fin-chip ${mesRef === 'atual' ? 'active' : ''}`} onClick={() => setMesRef('atual')}>Este mês ({nomeMes(mesAtual)})</button>
+        <button type="button" className={`fin-chip ${mesRef === 'proximo' ? 'active' : ''}`} onClick={() => setMesRef('proximo')}>Próximo mês ({nomeMes(mesSeguinte)})</button>
+      </div>
       {/* 4 Cards Grid */}
       <div className="grid-cols-4">
         <div className="glass-card accented">
           <div className="kpi-header">
-            <span className="kpi-title">Receita Mensal Recorrente (MRR)</span>
-            <div className="kpi-icon-wrapper purple">
+            <span className="kpi-title">A receber em {nomeMes(mes)}</span>
+            <div className="kpi-icon-wrapper green">
               <DollarSign size={20} />
             </div>
           </div>
-          <div className="kpi-value">
-            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(mrr)}
+          <div className="kpi-value">{brl(recPrevisto - recRecebido)}</div>
+          <div className="kpi-subtext" style={{ display: 'flex', flexDirection: 'column', gap: '0.1rem' }}>
+            <span>Recebido: {brl(recRecebido)} de {brl(recPrevisto)}</span>
+            {recAtrasado > 0 && <span className="text-danger fw-600">Atrasado de meses anteriores: {brl(recAtrasado)}</span>}
+            <span className="text-muted">Recorrente dos contratos: {brl(mrr)}/mês</span>
           </div>
-          <div className="kpi-subtext text-success">
-            <ArrowUpRight size={14} /> +12% em relação ao mês anterior
+        </div>
+
+        <div className="glass-card">
+          <div className="kpi-header">
+            <span className="kpi-title">A pagar em {nomeMes(mes)}</span>
+            <div className="kpi-icon-wrapper orange">
+              <Clock size={20} />
+            </div>
+          </div>
+          <div className="kpi-value">{brl(pagPrevisto - pagPago)}</div>
+          <div className="kpi-subtext" style={{ display: 'flex', flexDirection: 'column', gap: '0.1rem' }}>
+            <span>Pago: {brl(pagPago)} de {brl(pagPrevisto)}</span>
+            {pagAtrasado > 0 && <span className="text-danger fw-600">Atrasado de meses anteriores: {brl(pagAtrasado)}</span>}
+            <span className="text-muted">Saldo previsto do mês: {brl(recPrevisto - pagPrevisto)}</span>
           </div>
         </div>
 
@@ -96,19 +136,6 @@ export const Dashboard: React.FC = () => {
           </div>
           <div className="kpi-subtext">
             Reflete oportunidades e propostas abertas
-          </div>
-        </div>
-
-        <div className="glass-card">
-          <div className="kpi-header">
-            <span className="kpi-title">Taxa de Conversão Comercial</span>
-            <div className="kpi-icon-wrapper green">
-              <Users size={20} />
-            </div>
-          </div>
-          <div className="kpi-value">{conversionRate}%</div>
-          <div className="kpi-subtext text-success">
-            Meta anual estabelecida de 30%
           </div>
         </div>
 
@@ -194,28 +221,30 @@ export const Dashboard: React.FC = () => {
       {/* Bottom Section: Recent Financial Activity & Specialized Office Notice */}
       <div className="grid-cols-2 mt-2">
         <div className="glass-card">
-          <h3 className="card-title">Movimentações Financeiras Recentes</h3>
-          {recentTransactions.length === 0 ? (
-            <div className="empty-state text-center p-2 text-muted">Nenhuma transação financeira registrada.</div>
+          <h3 className="card-title">Entradas e saídas de {nomeMes(mes)}</h3>
+          {movimentosMes.length === 0 ? (
+            <div className="empty-state text-center p-2 text-muted">Nada lançado para este mês.</div>
           ) : (
-            <div className="transactions-list">
-              {recentTransactions.map(tx => (
-                <div key={tx.id} className="transaction-item flex justify-between items-center py-2 border-b border-glass">
-                  <div>
-                    <span className="font-semibold block">{tx.description}</span>
-                    <span className="text-xs text-muted">Vencimento: {tx.dueDate}</span>
+            <div className="transactions-list" style={{ maxHeight: '22rem', overflowY: 'auto' }}>
+              {movimentosMes.map(m => {
+                const atrasado = !m.quitado && m.data < hoje;
+                return (
+                  <div key={m.id} className="transaction-item flex justify-between items-center py-2 border-b border-glass">
+                    <div>
+                      <span className="font-semibold block">{m.desc}</span>
+                      <span className="text-xs text-muted">Vencimento: {m.data.split('-').reverse().join('/')}</span>
+                    </div>
+                    <div className="text-right">
+                      <span className={`font-semibold ${m.entrada ? 'text-success' : 'text-danger'}`}>
+                        {m.entrada ? '+ ' : '- '}{brl(m.valor)}
+                      </span>
+                      <span className={`badge badge-sm block mt-1 ${m.quitado ? 'badge-success' : atrasado ? 'badge-danger' : 'badge-warning'}`}>
+                        {m.quitado ? (m.entrada ? 'Recebido' : 'Pago') : atrasado ? 'Atrasado' : 'Em aberto'}
+                      </span>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <span className={`font-semibold ${tx.type === 'income' ? 'text-success' : 'text-danger'}`}>
-                      {tx.type === 'income' ? '+ ' : '- '}
-                      {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(tx.amount)}
-                    </span>
-                    <span className={`badge badge-sm block mt-1 ${tx.status === 'paid' ? 'badge-success' : 'badge-warning'}`}>
-                      {tx.status === 'paid' ? 'Liquidado' : 'Pendente'}
-                    </span>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
