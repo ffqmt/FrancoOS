@@ -108,3 +108,24 @@
 .inline-panel-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.55); z-index: 200; display: flex; justify-content: flex-end; }
 .panel-header { display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--glass-border); }
 .panel-body { padding: 1.5rem; overflow-y: auto; }
+
+/* ── Filtros inteligentes do Financeiro ─────────────────────── */
+.fin-filtros { display: flex; flex-direction: column; gap: 0.6rem; margin: 0.75rem 0 0.25rem; }
+.fin-filtros-chips { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.fin-chip {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  padding: 0.35rem 0.75rem; font-size: 0.78rem; font-weight: 500;
+  border-radius: 999px; border: 1px solid var(--glass-border);
+  background: var(--bg-tertiary); color: var(--text-secondary); cursor: pointer;
+}
+.fin-chip:hover { color: var(--text-primary); }
+.fin-chip.active { border-color: var(--accent-primary); color: var(--accent-primary); background: var(--accent-glow); }
+.fin-chip.alerta:not(.active) .fin-chip-n { background: rgba(239, 68, 68, 0.18); color: #f87171; }
+.fin-chip-n { font-size: 0.7rem; padding: 0 0.4rem; border-radius: 999px; background: var(--bg-secondary); }
+.fin-filtros-linha { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; }
+.fin-filtros-linha .form-select { width: auto; min-width: 12rem; }
+.fin-busca { position: relative; flex: 1; min-width: 14rem; }
+.fin-busca svg { position: absolute; left: 0.7rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
+.fin-busca .form-control { width: 100%; padding-left: 2rem; }
+.fin-filtros-total { margin-left: auto; display: flex; gap: 0.6rem; align-items: baseline; font-size: 0.85rem; }
+.fin-filtros-total strong { font-size: 1rem; }

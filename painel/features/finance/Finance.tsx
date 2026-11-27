@@ -4,8 +4,81 @@ import { BaixaModal } from './BaixaModal';
 import type { AccountsPayable, AcaoFinanceira } from '../../types';
 import { 
   Plus, X, ArrowUpRight, ArrowDownRight, FileText, Check, 
-  Clock, Mail, MessageSquare, Undo2
+  Clock, Mail, MessageSquare, Undo2, Search
 } from 'lucide-react';
+
+// --- Filtros inteligentes (Contas a Receber / Contas a Pagar) ---
+type Periodo = 'aberto' | 'vencidos' | 'este_mes' | 'proximo_mes' | 'prox_90' | 'quitados' | 'todos';
+const PERIODOS: { chave: Periodo; rotulo: string }[] = [
+  { chave: 'aberto', rotulo: 'Em aberto' },
+  { chave: 'vencidos', rotulo: 'Vencidos' },
+  { chave: 'este_mes', rotulo: 'Este mês' },
+  { chave: 'proximo_mes', rotulo: 'Próximo mês' },
+  { chave: 'prox_90', rotulo: 'Próximos 90 dias' },
+  { chave: 'quitados', rotulo: 'Quitados' },
+  { chave: 'todos', rotulo: 'Todos' },
+];
+
+const mesDe = (data: string) => data.slice(0, 7);
+const somaDias = (data: string, dias: number) => {
+  const d = new Date(data + 'T12:00:00');
+  d.setDate(d.getDate() + dias);
+  return d.toISOString().split('T')[0];
+};
+const proximoMes = (hoje: string) => {
+  const d = new Date(hoje.slice(0, 7) + '-01T12:00:00');
+  d.setMonth(d.getMonth() + 1);
+  return d.toISOString().slice(0, 7);
+};
+const semAcento = (t: string) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
+/** Decide se um lançamento entra no período escolhido. quitado = pago/recebido; cancelado nunca aparece fora de "Todos". */
+function noPeriodo(periodo: Periodo, venc: string, quitado: boolean, cancelado: boolean, hoje: string) {
+  if (periodo === 'todos') return true;
+  if (cancelado) return false;
+  if (periodo === 'quitados') return quitado;
+  if (quitado) return false;
+  switch (periodo) {
+    case 'aberto': return true;
+    case 'vencidos': return venc < hoje;
+    case 'este_mes': return mesDe(venc) === mesDe(hoje);
+    case 'proximo_mes': return mesDe(venc) === proximoMes(hoje);
+    case 'prox_90': return venc >= hoje && venc <= somaDias(hoje, 90);
+  }
+  return true;
+}
+
+const FiltrosBar: React.FC<{
+  periodo: Periodo; setPeriodo: (p: Periodo) => void;
+  contagem: Record<Periodo, number>;
+  pessoa: string; setPessoa: (p: string) => void; pessoas: string[]; rotuloPessoa: string;
+  busca: string; setBusca: (b: string) => void;
+  total: number; qtd: number; formatCurrency: (v: number) => string; corTotal: string;
+}> = ({ periodo, setPeriodo, contagem, pessoa, setPessoa, pessoas, rotuloPessoa, busca, setBusca, total, qtd, formatCurrency, corTotal }) => (
+  <div className="fin-filtros">
+    <div className="fin-filtros-chips">
+      {PERIODOS.map(p => (
+        <button key={p.chave} type="button" className={`fin-chip ${periodo === p.chave ? 'active' : ''} ${p.chave === 'vencidos' && contagem.vencidos > 0 ? 'alerta' : ''}`} onClick={() => setPeriodo(p.chave)}>
+          {p.rotulo} <span className="fin-chip-n">{contagem[p.chave]}</span>
+        </button>
+      ))}
+    </div>
+    <div className="fin-filtros-linha">
+      <select className="form-select" value={pessoa} onChange={e => setPessoa(e.target.value)} aria-label={rotuloPessoa}>
+        <option value="">{rotuloPessoa}: todos</option>
+        {pessoas.map(n => <option key={n} value={n}>{n}</option>)}
+      </select>
+      <div className="fin-busca">
+        <Search size={14} />
+        <input className="form-control" placeholder="Buscar descrição, valor, observação..." value={busca} onChange={e => setBusca(e.target.value)} />
+      </div>
+      <div className="fin-filtros-total">
+        <span className="text-muted">{qtd} {qtd === 1 ? 'lançamento' : 'lançamentos'}</span>
+        <strong className={corTotal}>{formatCurrency(total)}</strong>
+      </div>
+    </div>
+  </div>
+);
 
 export const Finance: React.FC = () => {
   const { 
@@ -59,6 +132,14 @@ export const Finance: React.FC = () => {
 
   const today = new Date().toISOString().split('T')[0];
 
+  // Filtros
+  const [recPeriodo, setRecPeriodo] = useState<Periodo>('aberto');
+  const [recPessoa, setRecPessoa] = useState('');
+  const [recBusca, setRecBusca] = useState('');
+  const [payPeriodo, setPayPeriodo] = useState<Periodo>('aberto');
+  const [payPessoa, setPayPessoa] = useState('');
+  const [payBusca, setPayBusca] = useState('');
+
   // --- Calculations ---
 
   // Receivables
@@ -67,7 +148,7 @@ export const Finance: React.FC = () => {
     .reduce((sum, t) => sum + t.amount, 0);
 
   const totalRecebidoMes = transactions
-    .filter(t => t.type === 'income' && t.status === 'paid') // For MVP simplified, we sum paid income
+    .filter(t => t.type === 'income' && t.status === 'paid' && mesDe(t.paymentDate || t.dueDate) === mesDe(today))
     .reduce((sum, t) => sum + t.amount, 0);
 
   const totalVencidoReceber = transactions
@@ -80,7 +161,7 @@ export const Finance: React.FC = () => {
     .reduce((sum, p) => sum + p.valor, 0);
 
   const totalPagoMes = accountsPayables
-    .filter(p => p.status === 'pago')
+    .filter(p => p.status === 'pago' && mesDe(p.dataPagamento || p.vencimento) === mesDe(today))
     .reduce((sum, p) => sum + p.valor, 0);
 
   const totalVencidoPagar = accountsPayables
@@ -94,6 +175,34 @@ export const Finance: React.FC = () => {
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
   };
+
+  // --- Listas filtradas ---
+  const saldoAberto = (valor: number, baixas?: { valor: number }[]) => valor - (baixas ?? []).reduce((s, b) => s + b.valor, 0);
+  const contem = (busca: string, ...campos: (string | number | undefined)[]) =>
+    !busca.trim() || campos.some(c => c !== undefined && semAcento(String(c)).includes(semAcento(busca.trim())));
+
+  const receitas = transactions
+    .filter(t => t.type === 'income')
+    .map(t => ({ t, pessoa: clients.find(c => c.id === t.clientId)?.name || 'Venda Geral' }));
+  const recBase = receitas.filter(({ t, pessoa }) =>
+    (!recPessoa || pessoa === recPessoa) && contem(recBusca, t.description, t.category, pessoa, t.amount, t.dueDate));
+  const recContagem = Object.fromEntries(PERIODOS.map(p => [p.chave,
+    recBase.filter(({ t }) => noPeriodo(p.chave, t.dueDate, t.status === 'paid', false, today)).length])) as Record<Periodo, number>;
+  const recLista = recBase
+    .filter(({ t }) => noPeriodo(recPeriodo, t.dueDate, t.status === 'paid', false, today))
+    .sort((a, b) => recPeriodo === 'quitados' ? b.t.dueDate.localeCompare(a.t.dueDate) : a.t.dueDate.localeCompare(b.t.dueDate));
+  const recTotal = recLista.reduce((s, { t }) => s + (t.status === 'paid' ? t.amount : saldoAberto(t.amount, t.baixas)), 0);
+  const recPessoas = [...new Set(receitas.map(r => r.pessoa))].sort((a, b) => a.localeCompare(b));
+
+  const payBase = accountsPayables.filter(ap =>
+    (!payPessoa || ap.favorecido === payPessoa) && contem(payBusca, ap.descricao, ap.favorecido, ap.categoria, ap.observacoes, ap.valor, ap.vencimento));
+  const payContagem = Object.fromEntries(PERIODOS.map(p => [p.chave,
+    payBase.filter(ap => noPeriodo(p.chave, ap.vencimento, ap.status === 'pago', ap.status === 'cancelado', today)).length])) as Record<Periodo, number>;
+  const payLista = payBase
+    .filter(ap => noPeriodo(payPeriodo, ap.vencimento, ap.status === 'pago', ap.status === 'cancelado', today))
+    .sort((a, b) => payPeriodo === 'quitados' ? b.vencimento.localeCompare(a.vencimento) : a.vencimento.localeCompare(b.vencimento));
+  const payTotal = payLista.reduce((s, ap) => s + (ap.status === 'pago' ? ap.valor : ap.status === 'cancelado' ? 0 : saldoAberto(ap.valor, ap.baixas)), 0);
+  const payPessoas = [...new Set(accountsPayables.map(ap => ap.favorecido))].sort((a, b) => a.localeCompare(b));
 
   // --- Form Handlers ---
 
@@ -328,6 +437,10 @@ export const Finance: React.FC = () => {
                 <Plus size={14} /> Registrar Lançamento
               </button>
             </div>
+            <FiltrosBar periodo={recPeriodo} setPeriodo={setRecPeriodo} contagem={recContagem}
+              pessoa={recPessoa} setPessoa={setRecPessoa} pessoas={recPessoas} rotuloPessoa="Cliente"
+              busca={recBusca} setBusca={setRecBusca} total={recTotal} qtd={recLista.length}
+              formatCurrency={formatCurrency} corTotal="income-text" />
             
             <div className="table-container mt-1">
               <table className="premium-table">
@@ -343,9 +456,11 @@ export const Finance: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {transactions
-                    .filter(t => t.type === 'income')
-                    .map(tr => {
+                  {recLista.length === 0 && (
+                    <tr><td colSpan={7} className="text-muted" style={{ textAlign: 'center', padding: '1.5rem' }}>Nada neste filtro.</td></tr>
+                  )}
+                  {recLista
+                    .map(({ t: tr }) => {
                       const client = clients.find(c => c.id === tr.clientId);
                       const hasOverdue = tr.status !== 'paid' && tr.dueDate < today;
                       return (
@@ -414,6 +529,10 @@ export const Finance: React.FC = () => {
                 <Plus size={14} /> Nova Conta a Pagar
               </button>
             </div>
+            <FiltrosBar periodo={payPeriodo} setPeriodo={setPayPeriodo} contagem={payContagem}
+              pessoa={payPessoa} setPessoa={setPayPessoa} pessoas={payPessoas} rotuloPessoa="Favorecido"
+              busca={payBusca} setBusca={setPayBusca} total={payTotal} qtd={payLista.length}
+              formatCurrency={formatCurrency} corTotal="expense-text" />
 
             <div className="table-container mt-1">
               <table className="premium-table">
@@ -429,7 +548,10 @@ export const Finance: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {accountsPayables.map(ap => {
+                  {payLista.length === 0 && (
+                    <tr><td colSpan={7} className="text-muted" style={{ textAlign: 'center', padding: '1.5rem' }}>Nada neste filtro.</td></tr>
+                  )}
+                  {payLista.map(ap => {
                     const client = ap.clienteId ? clients.find(c => c.id === ap.clienteId) : null;
                     const hasOverdue = ap.status !== 'pago' && ap.status !== 'cancelado' && ap.vencimento < today;
                     return (
