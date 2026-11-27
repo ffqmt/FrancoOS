@@ -32,6 +32,53 @@ const proximoMes = (hoje: string) => {
 };
 const semAcento = (t: string) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 
+// --- Tipo do lançamento (filtro "Tipo") ---
+const TIPO_POR_CATEGORIA_SERVICO: Record<string, string> = {
+  contabilidade: 'Contabilidade', fiscal: 'Contabilidade', folha: 'Folha / DP',
+  consultoria: 'Consultoria', automacao: 'Automação', produto_digital: 'Software',
+};
+const TIPO_POR_RELACIONAMENTO: Record<string, string> = {
+  contabil: 'Contabilidade', fiscal: 'Contabilidade', folha: 'Folha / DP',
+  consultoria: 'Consultoria', automacao: 'Automação', bpo: 'Consultoria',
+};
+const TIPO_POR_CATEGORIA_RECEITA: Record<string, string> = {
+  mensalidade: 'Mensalidade', avulso: 'Avulso', comissao: 'Comissão', repasse: 'Repasse', outros: 'Outros',
+};
+/** Tipo da receita: pelo serviço do contrato; sem contrato, pelos contratos/relacionamento do cliente; senão pela categoria. */
+function tipoDaReceita(
+  t: { contractId?: string; clientId?: string; category: string; description: string },
+  contratos: { id: string; clientId: string; serviceId: string }[],
+  servicos: { id: string; name: string; category?: string }[],
+  clientes: { id: string; relationshipType?: string }[],
+) {
+  const doServico = (serviceId?: string) => {
+    if (!serviceId) return '';
+    if (serviceId === 's_terceirizacao') return 'Terceirização';
+    const sv = servicos.find(x => x.id === serviceId);
+    return (sv?.category && TIPO_POR_CATEGORIA_SERVICO[sv.category]) || sv?.name || '';
+  };
+  if (semAcento(t.description).includes('terceiriza')) return 'Terceirização';
+  const k = t.contractId ? contratos.find(c => c.id === t.contractId) : undefined;
+  if (k) return doServico(k.serviceId) || 'Outros';
+  if (t.clientId && t.category === 'mensalidade') {
+    const tipos = [...new Set(contratos.filter(c => c.clientId === t.clientId).map(c => doServico(c.serviceId)).filter(Boolean))];
+    if (tipos.length === 1) return tipos[0];
+    const rel = clientes.find(c => c.id === t.clientId)?.relationshipType;
+    if (rel && TIPO_POR_RELACIONAMENTO[rel]) return TIPO_POR_RELACIONAMENTO[rel];
+  }
+  return TIPO_POR_CATEGORIA_RECEITA[t.category] || 'Outros';
+}
+/** Tipo da conta a pagar: parceiros e repasses juntos, comissão à parte, o resto pelo tipo. */
+function tipoDaDespesa(ap: { tipo: string; categoria?: string }) {
+  if (ap.tipo === 'comissao') return 'Comissão';
+  if (ap.tipo === 'repasse' || /parceir|repasse/i.test(ap.categoria ?? '')) return 'Parceiros / Repasse';
+  const r: Record<string, string> = {
+    prestador: 'Prestadores', fornecedor: 'Fornecedores', ferramenta: 'Ferramentas / Software',
+    imposto: 'Impostos / Taxas', despesa: 'Outras despesas',
+  };
+  return r[ap.tipo] || 'Outras despesas';
+}
+
 /** Decide se um lançamento entra no período escolhido. quitado = pago/recebido; cancelado nunca aparece fora de "Todos". */
 function noPeriodo(periodo: Periodo, venc: string, quitado: boolean, cancelado: boolean, hoje: string) {
   if (periodo === 'todos') return true;
@@ -52,11 +99,12 @@ const FiltrosBar: React.FC<{
   periodo: Periodo; setPeriodo: (p: Periodo) => void;
   contagem: Record<Periodo, number>;
   pessoa: string; setPessoa: (p: string) => void; pessoas: string[]; rotuloPessoa: string;
+  tipo: string; setTipo: (t: string) => void; tipos: { nome: string; qtd: number }[];
   busca: string; setBusca: (b: string) => void;
   quitados: boolean;
   de: string; setDe: (d: string) => void; ate: string; setAte: (d: string) => void;
   total: number; qtd: number; formatCurrency: (v: number) => string; corTotal: string;
-}> = ({ periodo, setPeriodo, contagem, pessoa, setPessoa, pessoas, rotuloPessoa, busca, setBusca, quitados, de, setDe, ate, setAte, total, qtd, formatCurrency, corTotal }) => (
+}> = ({ periodo, setPeriodo, contagem, pessoa, setPessoa, pessoas, rotuloPessoa, tipo, setTipo, tipos, busca, setBusca, quitados, de, setDe, ate, setAte, total, qtd, formatCurrency, corTotal }) => (
   <div className="fin-filtros">
     <div className="fin-filtros-chips">
       {PERIODOS.map(p => (
@@ -69,6 +117,10 @@ const FiltrosBar: React.FC<{
       <select className="form-select" value={pessoa} onChange={e => setPessoa(e.target.value)} aria-label={rotuloPessoa}>
         <option value="">{rotuloPessoa}: todos</option>
         {pessoas.map(n => <option key={n} value={n}>{n}</option>)}
+      </select>
+      <select className="form-select" value={tipo} onChange={e => setTipo(e.target.value)} aria-label="Tipo">
+        <option value="">Tipo: todos</option>
+        {tipos.map(x => <option key={x.nome} value={x.nome}>{x.nome} ({x.qtd})</option>)}
       </select>
       <div className="fin-datas">
         <span className="text-muted">{quitados ? 'Pagamento de' : 'Vencimento de'}</span>
@@ -93,7 +145,7 @@ const FiltrosBar: React.FC<{
 
 export const Finance: React.FC = () => {
   const { 
-    transactions, invoices, accountsPayables, financialActions, clients, contracts,
+    transactions, invoices, accountsPayables, financialActions, clients, contracts, services,
     addTransaction, updateTransactionStatus, addInvoice,
     addAccountsPayable, updateAccountsPayableStatus,
     addFinancialAction, updateFinancialActionStatus
@@ -150,6 +202,8 @@ export const Finance: React.FC = () => {
   const [payPeriodo, setPayPeriodo] = useState<Periodo>('aberto');
   const [payPessoa, setPayPessoa] = useState('');
   const [payBusca, setPayBusca] = useState('');
+  const [recTipo, setRecTipo] = useState('');
+  const [payTipo, setPayTipo] = useState('');
   const [recDe, setRecDe] = useState('');
   const [recAte, setRecAte] = useState('');
   const [payDe, setPayDe] = useState('');
@@ -197,9 +251,9 @@ export const Finance: React.FC = () => {
 
   const receitas = transactions
     .filter(t => t.type === 'income')
-    .map(t => ({ t, pessoa: clients.find(c => c.id === t.clientId)?.name || 'Venda Geral' }));
-  const recBase = receitas.filter(({ t, pessoa }) =>
-    (!recPessoa || pessoa === recPessoa) && entreDatas(recPeriodo === 'quitados' ? (t.paymentDate || t.dueDate) : t.dueDate, recDe, recAte) && contem(recBusca, t.description, t.category, pessoa, t.amount, t.dueDate));
+    .map(t => ({ t, pessoa: clients.find(c => c.id === t.clientId)?.name || 'Venda Geral', tipo: tipoDaReceita(t, contracts, services, clients) }));
+  const recBase = receitas.filter(({ t, pessoa, tipo }) =>
+    (!recPessoa || pessoa === recPessoa) && (!recTipo || tipo === recTipo) && entreDatas(recPeriodo === 'quitados' ? (t.paymentDate || t.dueDate) : t.dueDate, recDe, recAte) && contem(recBusca, t.description, t.category, pessoa, t.amount, t.dueDate));
   const recContagem = Object.fromEntries(PERIODOS.map(p => [p.chave,
     recBase.filter(({ t }) => noPeriodo(p.chave, t.dueDate, t.status === 'paid', false, today)).length])) as Record<Periodo, number>;
   const recLista = recBase
@@ -207,9 +261,12 @@ export const Finance: React.FC = () => {
     .sort((a, b) => recPeriodo === 'quitados' ? b.t.dueDate.localeCompare(a.t.dueDate) : a.t.dueDate.localeCompare(b.t.dueDate));
   const recTotal = recLista.reduce((s, { t }) => s + (t.status === 'paid' ? t.amount : saldoAberto(t.amount, t.baixas)), 0);
   const recPessoas = [...new Set(receitas.map(r => r.pessoa))].sort((a, b) => a.localeCompare(b));
+  const contarTipos = (nomes: string[]) => Object.entries(nomes.reduce<Record<string, number>>((m, n) => { m[n] = (m[n] ?? 0) + 1; return m; }, {}))
+    .map(([nome, qtd]) => ({ nome, qtd })).sort((a, b) => a.nome.localeCompare(b.nome));
+  const recTipos = contarTipos(receitas.map(r => r.tipo));
 
   const payBase = accountsPayables.filter(ap =>
-    (!payPessoa || ap.favorecido === payPessoa) && entreDatas(payPeriodo === 'quitados' ? (ap.dataPagamento || ap.vencimento) : ap.vencimento, payDe, payAte) && contem(payBusca, ap.descricao, ap.favorecido, ap.categoria, ap.observacoes, ap.valor, ap.vencimento));
+    (!payPessoa || ap.favorecido === payPessoa) && (!payTipo || tipoDaDespesa(ap) === payTipo) && entreDatas(payPeriodo === 'quitados' ? (ap.dataPagamento || ap.vencimento) : ap.vencimento, payDe, payAte) && contem(payBusca, ap.descricao, ap.favorecido, ap.categoria, ap.observacoes, ap.valor, ap.vencimento));
   const payContagem = Object.fromEntries(PERIODOS.map(p => [p.chave,
     payBase.filter(ap => noPeriodo(p.chave, ap.vencimento, ap.status === 'pago', ap.status === 'cancelado', today)).length])) as Record<Periodo, number>;
   const payLista = payBase
@@ -217,6 +274,7 @@ export const Finance: React.FC = () => {
     .sort((a, b) => payPeriodo === 'quitados' ? b.vencimento.localeCompare(a.vencimento) : a.vencimento.localeCompare(b.vencimento));
   const payTotal = payLista.reduce((s, ap) => s + (ap.status === 'pago' ? ap.valor : ap.status === 'cancelado' ? 0 : saldoAberto(ap.valor, ap.baixas)), 0);
   const payPessoas = [...new Set(accountsPayables.map(ap => ap.favorecido))].sort((a, b) => a.localeCompare(b));
+  const payTipos = contarTipos(accountsPayables.filter(ap => ap.status !== 'cancelado').map(tipoDaDespesa));
 
   // --- Form Handlers ---
 
@@ -455,6 +513,7 @@ export const Finance: React.FC = () => {
             </div>
             <FiltrosBar periodo={recPeriodo} setPeriodo={setRecPeriodo} contagem={recContagem}
               pessoa={recPessoa} setPessoa={setRecPessoa} pessoas={recPessoas} rotuloPessoa="Cliente"
+              tipo={recTipo} setTipo={setRecTipo} tipos={recTipos}
               busca={recBusca} setBusca={setRecBusca} quitados={recPeriodo === 'quitados'} de={recDe} setDe={setRecDe} ate={recAte} setAte={setRecAte} total={recTotal} qtd={recLista.length}
               formatCurrency={formatCurrency} corTotal="income-text" />
             
@@ -486,7 +545,7 @@ export const Finance: React.FC = () => {
                             <div>
                               <span>{tr.description}</span>
                               <span className="client-sublabel" style={{ display: 'block', fontSize: '0.7rem' }}>
-                                Categoria: {tr.category.toUpperCase()}
+                                {tipoDaReceita(tr, contracts, services, clients)} · {tr.category}
                               </span>
                             </div>
                           </td>
@@ -547,6 +606,7 @@ export const Finance: React.FC = () => {
             </div>
             <FiltrosBar periodo={payPeriodo} setPeriodo={setPayPeriodo} contagem={payContagem}
               pessoa={payPessoa} setPessoa={setPayPessoa} pessoas={payPessoas} rotuloPessoa="Favorecido"
+              tipo={payTipo} setTipo={setPayTipo} tipos={payTipos}
               busca={payBusca} setBusca={setPayBusca} quitados={payPeriodo === 'quitados'} de={payDe} setDe={setPayDe} ate={payAte} setAte={setPayAte} total={payTotal} qtd={payLista.length}
               formatCurrency={formatCurrency} corTotal="expense-text" />
 
@@ -576,7 +636,7 @@ export const Finance: React.FC = () => {
                           <div className="client-table-info">
                             <span className="client-table-name">{ap.favorecido}</span>
                             <span className="badge badge-purple" style={{ alignSelf: 'flex-start', fontSize: '0.65rem', marginTop: '0.2rem' }}>
-                              {ap.tipo.toUpperCase()}
+                              {tipoDaDespesa(ap).toUpperCase()}
                             </span>
                           </div>
                         </td>
